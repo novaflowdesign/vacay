@@ -225,6 +225,7 @@ function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitie
   const [newLocality, setNewLocality] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   async function loadLocalities() {
     const { data, error: fetchError } = await supabase
@@ -300,39 +301,69 @@ function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitie
       <p className="country-card__section-title">Miejscowości</p>
 
       {localities === null && <p className="state-message">Wczytywanie…</p>}
-      {localities !== null && localities.length === 0 && <p className="form-hint">Brak zapisanych miejscowości.</p>}
 
-      {localities !== null && localities.length > 0 && (
-        <div className="settings-list">
-          {localities.map((l) => (
-            <div key={l.id} className="settings-row">
-              <span className="settings-row__label">{l.name}</span>
-              <button type="button" onClick={() => handleDeleteLocality(l.id)}>
-                Usuń
-              </button>
+      {localities !== null && !isEditing && (
+        <>
+          {localities.length === 0 ? (
+            <p className="form-hint">Brak zapisanych miejscowości.</p>
+          ) : (
+            <div className="locality-chips">
+              {localities.map((l) => (
+                <span key={l.id} className="locality-chip">
+                  {l.name}
+                </span>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
-        <input
-          type="text"
-          className="settings-row__name-input"
-          placeholder="Nazwa miejscowości"
-          value={newLocality}
-          onChange={(e) => setNewLocality(e.target.value)}
-        />
-        <button className="btn-primary" type="submit">
-          + Dodaj
+      {localities !== null && isEditing && (
+        <>
+          {localities.length > 0 && (
+            <div className="settings-list">
+              {localities.map((l) => (
+                <div key={l.id} className="settings-row">
+                  <span className="settings-row__label">{l.name}</span>
+                  <button type="button" onClick={() => handleDeleteLocality(l.id)}>
+                    Usuń
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
+            <input
+              type="text"
+              className="settings-row__name-input"
+              placeholder="Nazwa miejscowości"
+              value={newLocality}
+              onChange={(e) => setNewLocality(e.target.value)}
+            />
+            <button className="btn-primary" type="submit">
+              + Dodaj
+            </button>
+          </form>
+
+          {error && <p className="form-error">{error}</p>}
+
+          <button
+            type="button"
+            className="btn-danger country-card__remove"
+            onClick={handleRemoveCountry}
+            disabled={removing}
+          >
+            Usuń kraj z mapy
+          </button>
+        </>
+      )}
+
+      {localities !== null && (
+        <button type="button" className="locality-edit-toggle" onClick={() => setIsEditing((v) => !v)}>
+          {isEditing ? 'Gotowe' : 'Edytuj'}
         </button>
-      </form>
-
-      {error && <p className="form-error">{error}</p>}
-
-      <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
-        Usuń kraj z mapy
-      </button>
+      )}
     </div>
   );
 }
