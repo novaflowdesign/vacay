@@ -45,6 +45,10 @@ export default function SettingsPanel() {
         </div>
       </div>
 
+      <button className="btn-danger block-add" type="button" onClick={handleLogout} disabled={loggingOut}>
+        {loggingOut ? 'Wylogowywanie…' : 'Wyloguj'}
+      </button>
+
       <ThemeToggle />
 
       {profile?.role === 'admin' && (
@@ -56,10 +60,6 @@ export default function SettingsPanel() {
           <CurrenciesManager />
         </>
       )}
-
-      <button className="btn-danger block-add" type="button" onClick={handleLogout} disabled={loggingOut}>
-        {loggingOut ? 'Wylogowywanie…' : 'Wyloguj'}
-      </button>
     </div>
   );
 }
