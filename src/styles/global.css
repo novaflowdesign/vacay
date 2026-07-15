@@ -8,6 +8,7 @@
   --color-text-muted: #6b7280;
   --color-primary: #1C6E68;
   --color-primary-strong: #0F4C4A;
+  --color-primary-rgb: 28, 110, 104;
   --color-border: rgba(255, 255, 255, 0.6);
   --color-ink-rgb: 17, 24, 39;
   --color-border-subtle: rgba(var(--color-ink-rgb), 0.08);
@@ -47,6 +48,7 @@
     --color-text-muted: #98a29c;
     --color-primary: #2bb0a1;
     --color-primary-strong: #1c6e68;
+    --color-primary-rgb: 43, 176, 161;
     --color-border: rgba(255, 255, 255, 0.12);
     --color-ink-rgb: 255, 255, 255;
     --color-danger: #f87171;
@@ -70,6 +72,7 @@
   --color-text-muted: #98a29c;
   --color-primary: #2bb0a1;
   --color-primary-strong: #1c6e68;
+  --color-primary-rgb: 43, 176, 161;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-ink-rgb: 255, 255, 255;
   --color-danger: #f87171;
@@ -1650,4 +1653,47 @@ button {
   border-radius: var(--radius-md);
   padding: 14px;
   margin-top: 14px;
+}
+
+/* Mapa */
+
+.map-card {
+  padding: 10px;
+}
+
+.world-map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.world-map__country {
+  fill: rgba(var(--color-ink-rgb), 0.14);
+  stroke: var(--color-surface-solid);
+  stroke-width: 0.5;
+  transition: fill 0.15s var(--ease-out);
+}
+
+.world-map__country--visited {
+  fill: var(--color-primary);
+}
+
+.world-map__country--clickable {
+  cursor: pointer;
+}
+
+.world-map__country--clickable:hover {
+  fill: rgba(var(--color-primary-rgb), 0.55);
+}
+
+.map-count {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-text);
+  margin: 14px 0 4px;
+}
+
+.visited-list {
+  margin-top: 12px;
 }
