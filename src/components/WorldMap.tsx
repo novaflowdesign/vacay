@@ -301,8 +301,6 @@ function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitie
 
   return (
     <div>
-      <p className="country-card__section-title">Miejscowości</p>
-
       {localities === null && <p className="state-message">Wczytywanie…</p>}
 
       {localities !== null && !isEditing && (

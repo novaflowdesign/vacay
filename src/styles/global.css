@@ -1929,18 +1929,20 @@ button {
 }
 
 .locality-edit-toggle {
+  display: inline-block;
   margin-top: 12px;
-  background: rgba(var(--color-ink-rgb), 0.06);
+  background: none;
   border: none;
-  border-radius: var(--radius-pill);
-  color: var(--color-text-muted);
+  padding: 4px 0;
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
-  padding: 7px 14px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: transform 0.15s var(--ease-spring), background 0.15s var(--ease-out);
+  transition: opacity 0.15s var(--ease-out);
 }
 
 .locality-edit-toggle:active {
-  transform: scale(0.95);
+  opacity: 0.6;
 }
