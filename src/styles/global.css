@@ -1911,6 +1911,19 @@ button {
   margin-top: 20px;
 }
 
+.locality-panel__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.locality-panel__content {
+  flex: 1;
+  min-width: 0;
+}
+
 .locality-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1930,7 +1943,8 @@ button {
 
 .locality-edit-toggle {
   display: inline-block;
-  margin-top: 12px;
+  flex: none;
+  white-space: nowrap;
   background: none;
   border: none;
   padding: 4px 0;

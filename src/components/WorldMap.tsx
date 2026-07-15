@@ -303,20 +303,26 @@ function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitie
     <div>
       {localities === null && <p className="state-message">Wczytywanie…</p>}
 
-      {localities !== null && !isEditing && (
-        <>
-          {localities.length === 0 ? (
-            <p className="form-hint">Brak zapisanych miejscowości.</p>
-          ) : (
-            <div className="locality-chips">
-              {localities.map((l) => (
-                <span key={l.id} className="locality-chip">
-                  {l.name}
-                </span>
+      {localities !== null && (
+        <div className="locality-panel__top">
+          <div className="locality-panel__content">
+            {!isEditing &&
+              (localities.length === 0 ? (
+                <p className="form-hint">Brak zapisanych miejscowości.</p>
+              ) : (
+                <div className="locality-chips">
+                  {localities.map((l) => (
+                    <span key={l.id} className="locality-chip">
+                      {l.name}
+                    </span>
+                  ))}
+                </div>
               ))}
-            </div>
-          )}
-        </>
+          </div>
+          <button type="button" className="locality-edit-toggle" onClick={() => setIsEditing((v) => !v)}>
+            {isEditing ? 'Gotowe' : 'Edytuj'}
+          </button>
+        </div>
       )}
 
       {localities !== null && isEditing && (
@@ -358,12 +364,6 @@ function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitie
             Usuń kraj z mapy
           </button>
         </>
-      )}
-
-      {localities !== null && (
-        <button type="button" className="locality-edit-toggle" onClick={() => setIsEditing((v) => !v)}>
-          {isEditing ? 'Gotowe' : 'Edytuj'}
-        </button>
       )}
     </div>
   );
