@@ -2,11 +2,6 @@
 import '../styles/global.css';
 import { withBase } from '../lib/url';
 
-interface Props {
-  title: string;
-}
-
-const { title } = Astro.props;
 ---
 
 <!doctype html>
@@ -14,7 +9,8 @@ const { title } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>{title} — Vacay</title>
+    <title>Vacay - tracker wyjazdów i wydatków</title>
+    <meta name="description" content="Vacay - tracker wyjazdów i wydatków" />
 
     <link rel="icon" href={withBase('/icons/icon.svg')} type="image/svg+xml" />
     <link rel="icon" href={withBase('/favicon-32.png')} sizes="32x32" type="image/png" />
