@@ -214,14 +214,13 @@ function AddCountryDialog({ country, userId, onClose, onAdded }: AddCountryDialo
   );
 }
 
-interface CountryDetailCardProps {
+interface CountryLocalitiesPanelProps {
   country: CountryFeature;
   userId: string;
-  onClose: () => void;
   onRemoved: (alpha2: string) => void;
 }
 
-function CountryDetailCard({ country, userId, onClose, onRemoved }: CountryDetailCardProps) {
+function CountryLocalitiesPanel({ country, userId, onRemoved }: CountryLocalitiesPanelProps) {
   const [localities, setLocalities] = useState<VisitedLocality[] | null>(null);
   const [newLocality, setNewLocality] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -297,6 +296,56 @@ function CountryDetailCard({ country, userId, onClose, onRemoved }: CountryDetai
   }
 
   return (
+    <div>
+      <p className="country-card__section-title">Miejscowości</p>
+
+      {localities === null && <p className="state-message">Wczytywanie…</p>}
+      {localities !== null && localities.length === 0 && <p className="form-hint">Brak zapisanych miejscowości.</p>}
+
+      {localities !== null && localities.length > 0 && (
+        <div className="settings-list">
+          {localities.map((l) => (
+            <div key={l.id} className="settings-row">
+              <span className="settings-row__label">{l.name}</span>
+              <button type="button" onClick={() => handleDeleteLocality(l.id)}>
+                Usuń
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
+        <input
+          type="text"
+          className="settings-row__name-input"
+          placeholder="Nazwa miejscowości"
+          value={newLocality}
+          onChange={(e) => setNewLocality(e.target.value)}
+        />
+        <button className="btn-primary" type="submit">
+          + Dodaj
+        </button>
+      </form>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
+        Usuń kraj z mapy
+      </button>
+    </div>
+  );
+}
+
+interface CountryDetailCardProps {
+  country: CountryFeature;
+  userId: string;
+  onClose: () => void;
+  onRemoved: (alpha2: string) => void;
+}
+
+function CountryDetailCard({ country, userId, onClose, onRemoved }: CountryDetailCardProps) {
+  return (
     <div
       className="country-card-backdrop"
       onClick={(e) => {
@@ -313,42 +362,7 @@ function CountryDetailCard({ country, userId, onClose, onRemoved }: CountryDetai
           </button>
         </div>
 
-        <p className="country-card__section-title">Miejscowości</p>
-
-        {localities === null && <p className="state-message">Wczytywanie…</p>}
-        {localities !== null && localities.length === 0 && <p className="form-hint">Brak zapisanych miejscowości.</p>}
-
-        {localities !== null && localities.length > 0 && (
-          <div className="settings-list">
-            {localities.map((l) => (
-              <div key={l.id} className="settings-row">
-                <span className="settings-row__label">{l.name}</span>
-                <button type="button" onClick={() => handleDeleteLocality(l.id)}>
-                  Usuń
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
-          <input
-            type="text"
-            className="settings-row__name-input"
-            placeholder="Nazwa miejscowości"
-            value={newLocality}
-            onChange={(e) => setNewLocality(e.target.value)}
-          />
-          <button className="btn-primary" type="submit">
-            + Dodaj
-          </button>
-        </form>
-
-        {error && <p className="form-error">{error}</p>}
-
-        <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
-          Usuń kraj z mapy
-        </button>
+        <CountryLocalitiesPanel country={country} userId={userId} onRemoved={onRemoved} />
       </div>
     </div>
   );
@@ -362,6 +376,7 @@ export default function WorldMap() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryFeature | null>(null);
   const [addingCountry, setAddingCountry] = useState<CountryFeature | null>(null);
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
 
   useEffect(() => {
     if (session === null) {
@@ -442,6 +457,7 @@ export default function WorldMap() {
       return next;
     });
     setSelectedCountry(null);
+    setExpandedCountry((prev) => (prev === alpha2 ? null : prev));
   }
 
   if (session === undefined || visited === null) {
@@ -483,24 +499,37 @@ export default function WorldMap() {
       <p className="form-hint map-count">Odwiedzone kraje: {visitedList.length}</p>
 
       {visitedList.length > 0 && (
-        <div className="card settings-list visited-list">
-          {visitedList.map((c) => (
-            <div
-              key={c.alpha2}
-              className="settings-row visited-list__row"
-              onClick={() => setSelectedCountry(c)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setSelectedCountry(c);
-              }}
-            >
-              <span className="settings-row__label">
-                {countryCodeToFlag(c.alpha2)} {c.name}
-              </span>
-              <span className="settings-row__chevron">›</span>
-            </div>
-          ))}
+        <div className="card visited-list">
+          {visitedList.map((c) => {
+            const isExpanded = expandedCountry === c.alpha2;
+            return (
+              <div key={c.alpha2} className="visited-list__item">
+                <div
+                  className="settings-row visited-list__row"
+                  onClick={() => setExpandedCountry((prev) => (prev === c.alpha2 ? null : c.alpha2))}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setExpandedCountry((prev) => (prev === c.alpha2 ? null : c.alpha2));
+                    }
+                  }}
+                >
+                  <span className="settings-row__label">
+                    {countryCodeToFlag(c.alpha2)} {c.name}
+                  </span>
+                  <span className={`settings-row__chevron ${isExpanded ? 'settings-row__chevron--open' : ''}`}>
+                    ›
+                  </span>
+                </div>
+                {isExpanded && (
+                  <div className="visited-list__panel">
+                    <CountryLocalitiesPanel country={c} userId={userId} onRemoved={handleCountryRemoved} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

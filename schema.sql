@@ -227,6 +227,19 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
+-- Pomocnicza funkcja: czy zalogowany user jest uczestnikiem (z kontem) danego
+-- wyjazdu? SECURITY DEFINER, żeby ominąć RLS przy odpytywaniu trip_participants
+-- z JEJ WŁASNEJ polityki select — bez tego zapytanie do trip_participants
+-- wewnątrz jej polityki select wywołuje tę samą politykę rekurencyjnie
+-- (infinite recursion detected in policy for relation "trip_participants").
+create function is_trip_member(check_trip_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from trip_participants tp
+    where tp.trip_id = check_trip_id and tp.profile_id = auth.uid()
+  );
+$$ language sql security definer stable;
+
 -- ---- profiles ----
 create policy "Wszyscy zalogowani widzą profile" on profiles
   for select using (auth.uid() is not null);
@@ -239,13 +252,7 @@ create policy "Admin edytuje profile (imiona/role)" on profiles
 -- podpięty jako uczestnik z kontem (trip_participants.profile_id) — patrz
 -- opis w sekcji 2 schematu. Insert/update/delete cały czas tylko dla admina.
 create policy "Uczestnicy i admin widzą wyjazdy" on trips
-  for select using (
-    is_admin()
-    or exists (
-      select 1 from trip_participants tp
-      where tp.trip_id = trips.id and tp.profile_id = auth.uid()
-    )
-  );
+  for select using (is_admin() or is_trip_member(id));
 
 create policy "Admin zarządza wyjazdami" on trips
   for insert with check (is_admin());
@@ -256,13 +263,7 @@ create policy "Admin usuwa wyjazdy" on trips
 
 -- ---- trip_participants ----
 create policy "Uczestnicy i admin widzą listę uczestników" on trip_participants
-  for select using (
-    is_admin()
-    or exists (
-      select 1 from trip_participants tp2
-      where tp2.trip_id = trip_participants.trip_id and tp2.profile_id = auth.uid()
-    )
-  );
+  for select using (is_admin() or is_trip_member(trip_id));
 create policy "Admin zarządza uczestnikami" on trip_participants
   for all using (is_admin()) with check (is_admin());
 
@@ -286,13 +287,7 @@ create policy "Admin usuwa waluty" on currencies
 
 -- ---- expenses ----
 create policy "Uczestnicy i admin widzą wydatki" on expenses
-  for select using (
-    is_admin()
-    or exists (
-      select 1 from trip_participants tp
-      where tp.trip_id = expenses.trip_id and tp.profile_id = auth.uid()
-    )
-  );
+  for select using (is_admin() or is_trip_member(trip_id));
 create policy "Admin dodaje wydatki" on expenses
   for insert with check (is_admin());
 create policy "Admin edytuje wydatki" on expenses
@@ -306,8 +301,7 @@ create policy "Uczestnicy i admin widzą płatności" on expense_payments
     is_admin()
     or exists (
       select 1 from expenses e
-      join trip_participants tp on tp.trip_id = e.trip_id
-      where e.id = expense_payments.expense_id and tp.profile_id = auth.uid()
+      where e.id = expense_payments.expense_id and is_trip_member(e.trip_id)
     )
   );
 create policy "Admin zarządza płatnościami" on expense_payments
@@ -327,13 +321,7 @@ create policy "Własne miejscowości lub admin" on visited_localities
 
 -- ---- itinerary_days ----
 create policy "Uczestnicy i admin widzą plan" on itinerary_days
-  for select using (
-    is_admin()
-    or exists (
-      select 1 from trip_participants tp
-      where tp.trip_id = itinerary_days.trip_id and tp.profile_id = auth.uid()
-    )
-  );
+  for select using (is_admin() or is_trip_member(trip_id));
 create policy "Admin zarządza planem dni" on itinerary_days
   for all using (is_admin()) with check (is_admin());
 
@@ -343,8 +331,7 @@ create policy "Uczestnicy i admin widzą punkty planu" on itinerary_items
     is_admin()
     or exists (
       select 1 from itinerary_days d
-      join trip_participants tp on tp.trip_id = d.trip_id
-      where d.id = itinerary_items.day_id and tp.profile_id = auth.uid()
+      where d.id = itinerary_items.day_id and is_trip_member(d.trip_id)
     )
   );
 create policy "Admin zarządza punktami planu" on itinerary_items
