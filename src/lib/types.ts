@@ -72,3 +72,21 @@ export interface TripBalanceRow {
   payer_label: string | null;
   total_balance: number;
 }
+
+export interface ItineraryDay {
+  id: string;
+  trip_id: string;
+  day_date: string;
+  day_number: number;
+  title: string | null;
+}
+
+export interface ItineraryItem {
+  id: string;
+  day_id: string;
+  time: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  order_index: number;
+}

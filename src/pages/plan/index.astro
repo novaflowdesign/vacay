@@ -1,0 +1,11 @@
+---
+import AppShell from '../../layouts/AppShell.astro';
+import PlanTripList from '../../components/PlanTripList';
+---
+
+<AppShell title="Plan wyjazdu">
+  <div class="page">
+    <h1 class="page-title">Plan wyjazdu</h1>
+    <PlanTripList client:load />
+  </div>
+</AppShell>

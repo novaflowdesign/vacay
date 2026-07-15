@@ -1534,3 +1534,138 @@ button {
 .converter__date {
   margin-top: 10px;
 }
+
+/* Plan wyjazdu */
+
+.day-card {
+  margin-bottom: 12px;
+}
+
+.day-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.day-card__number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.day-card__date {
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 2px;
+  text-transform: capitalize;
+}
+
+.day-card__delete {
+  flex-shrink: 0;
+  background: rgba(220, 38, 38, 0.08);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.day-card__title {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.day-card__title-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-solid);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.itinerary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.itinerary-item {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.itinerary-item__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.itinerary-item__time {
+  background: rgba(var(--color-ink-rgb), 0.08);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.itinerary-item__category {
+  flex-shrink: 0;
+}
+
+.itinerary-item__title {
+  min-width: 0;
+}
+
+.itinerary-item__description {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.itinerary-item__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 13px;
+}
+
+.itinerary-item__actions a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.itinerary-item__actions button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.itinerary-item-form {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: 14px;
+}
