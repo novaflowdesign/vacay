@@ -78,16 +78,16 @@ export default function CurrenciesManager() {
         ))}
       </div>
 
-      <form className="form settings-add-form" onSubmit={handleAdd}>
+      <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAdd}>
         <input
           type="text"
           className="settings-row__currency-input"
-          placeholder="np. GBP"
+          placeholder="EUR"
           maxLength={3}
           value={newCode}
           onChange={(e) => setNewCode(e.target.value.toUpperCase())}
         />
-        <button className="btn-primary settings-add-form__submit" type="submit">
+        <button className="btn-primary" type="submit">
           + Dodaj walutę
         </button>
       </form>

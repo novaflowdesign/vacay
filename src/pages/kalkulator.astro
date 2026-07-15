@@ -1,12 +1,13 @@
 ---
 import AppShell from '../layouts/AppShell.astro';
 import RequireAuth from '../components/RequireAuth';
+import CurrencyCalculator from '../components/CurrencyCalculator';
 ---
 
 <AppShell title="Kalkulator walut">
   <RequireAuth client:load />
   <div class="page">
     <h1 class="page-title">Kalkulator walut</h1>
-    <p class="state-message">Przeliczanie EUR/USD/GBP → PLN wg kursu NBP — wkrótce.</p>
+    <CurrencyCalculator client:load />
   </div>
 </AppShell>

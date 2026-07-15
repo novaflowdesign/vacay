@@ -311,14 +311,14 @@ button {
 }
 
 .top-bar__mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: block;
 }
 
 .top-bar__wordmark {
-  height: 18px;
+  height: 28px;
   width: auto;
   display: block;
 }
@@ -1303,6 +1303,15 @@ button {
   gap: 10px !important;
 }
 
+.settings-add-form--inline {
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.settings-add-form--inline .btn-primary {
+  flex: 1;
+}
+
 .settings-add-form__row {
   display: flex;
   gap: 8px;
@@ -1448,4 +1457,80 @@ button {
   .sidebar__item--settings {
     margin-top: auto;
   }
+}
+
+/* Kalkulator walut */
+
+.converter {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  position: relative;
+}
+
+.converter__row {
+  display: flex;
+  gap: 8px;
+}
+
+.converter__row input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.converter__row input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(28, 110, 104, 0.15);
+}
+
+.converter__row select {
+  width: 92px;
+  flex-shrink: 0;
+  padding: 14px 8px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.converter__swap {
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  margin: 10px 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-solid);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-glass-sm);
+  transition: transform 0.15s var(--ease-spring), background 0.15s var(--ease-out);
+}
+
+.converter__swap:active {
+  transform: scale(0.9) rotate(180deg);
+}
+
+.converter__swap svg {
+  width: 20px;
+  height: 20px;
+}
+
+.converter__date {
+  margin-top: 10px;
 }
