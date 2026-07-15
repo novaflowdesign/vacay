@@ -1576,24 +1576,6 @@ button {
   white-space: nowrap;
 }
 
-.day-card__title {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.day-card__title-input {
-  width: 100%;
-  margin-top: 10px;
-  padding: 9px 12px;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-solid);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-style: italic;
-}
-
 .itinerary-items {
   display: flex;
   flex-direction: column;
@@ -1668,4 +1650,26 @@ button {
   border-radius: var(--radius-md);
   padding: 14px;
   margin-top: 14px;
+}
+
+.itinerary-item-form__row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.itinerary-item-form__row > div:not(.itinerary-item-form__time) {
+  flex: 1;
+  min-width: 0;
+}
+
+.itinerary-item-form__time {
+  flex-shrink: 0;
+  width: 108px;
+}
+
+.form .itinerary-item-form__time input {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
 }

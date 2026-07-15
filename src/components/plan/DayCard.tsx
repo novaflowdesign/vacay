@@ -7,7 +7,7 @@ const ITEM_CATEGORIES = [
   { value: 'zwiedzanie', label: 'Zwiedzanie', icon: '🏛️' },
   { value: 'jedzenie', label: 'Jedzenie', icon: '🍽️' },
   { value: 'transport', label: 'Transport', icon: '🚗' },
-  { value: 'odpoczynek', label: 'Odpoczynek', icon: '😌' },
+  { value: 'odpoczynek', label: 'Odpoczynek', icon: '🏖️' },
 ];
 
 function categoryIcon(value: string | null): string {
@@ -35,8 +35,8 @@ interface ItemFormProps {
 function ItemForm({ draft, setDraft, onSubmit, onCancel, error, submitLabel }: ItemFormProps) {
   return (
     <form className="form itinerary-item-form" onSubmit={onSubmit}>
-      <div className="amount-row">
-        <div>
+      <div className="itinerary-item-form__row">
+        <div className="itinerary-item-form__time">
           <label htmlFor="itemTime">Godzina</label>
           <input
             id="itemTime"
@@ -102,7 +102,6 @@ interface DayCardProps {
 
 export default function DayCard({ day, isAdmin, onDeleteDay }: DayCardProps) {
   const [items, setItems] = useState<ItineraryItem[] | null>(null);
-  const [title, setTitle] = useState(day.title ?? '');
   const [formMode, setFormMode] = useState<'closed' | 'create' | string>('closed');
   const [draft, setDraft] = useState<ItemDraft>(EMPTY_DRAFT);
   const [error, setError] = useState<string | null>(null);
@@ -125,11 +124,6 @@ export default function DayCard({ day, isAdmin, onDeleteDay }: DayCardProps) {
     loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day.id]);
-
-  async function saveTitle() {
-    if (title === (day.title ?? '')) return;
-    await supabase.from('itinerary_days').update({ title: title.trim() || null }).eq('id', day.id);
-  }
 
   function startCreate() {
     setError(null);
@@ -211,19 +205,6 @@ export default function DayCard({ day, isAdmin, onDeleteDay }: DayCardProps) {
           </button>
         )}
       </div>
-
-      {isAdmin ? (
-        <input
-          type="text"
-          className="day-card__title-input"
-          placeholder="Nazwa dnia (opcjonalnie), np. Zwiedzanie Starówki"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={saveTitle}
-        />
-      ) : (
-        day.title && <div className="day-card__title">{day.title}</div>
-      )}
 
       {items === null && <p className="state-message">Wczytywanie…</p>}
 
