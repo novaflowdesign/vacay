@@ -33,7 +33,7 @@ export default function SettingsPanel() {
         </div>
         <div className="info-row">
           <span>Rola</span>
-          <span>{profile?.role === 'admin' ? 'Administrator' : 'Podgląd'}</span>
+          <span>{profile?.role === 'admin' ? 'Administrator' : 'Przeglądający'}</span>
         </div>
       </div>
 

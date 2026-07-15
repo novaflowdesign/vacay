@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Currency } from '../../lib/types';
 
+function isRealCurrencyCode(code: string): boolean {
+  try {
+    new Intl.NumberFormat('pl-PL', { style: 'currency', currency: code }).format(0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function CurrenciesManager() {
   const [currencies, setCurrencies] = useState<Currency[] | null>(null);
   const [newCode, setNewCode] = useState('');
@@ -21,6 +30,11 @@ export default function CurrenciesManager() {
     setError(null);
     const code = newCode.trim().toUpperCase();
     if (!code) return;
+
+    if (code.length !== 3 || !isRealCurrencyCode(code)) {
+      setError(`"${code}" nie jest prawidłowym kodem waluty (ISO 4217, np. EUR, USD, GBP).`);
+      return;
+    }
 
     const { error: insertError } = await supabase.from('currencies').insert({ code });
 
@@ -67,14 +81,14 @@ export default function CurrenciesManager() {
       <form className="form settings-add-form" onSubmit={handleAdd}>
         <input
           type="text"
-          className="settings-row__icon-input"
-          placeholder="EUR"
+          className="settings-row__currency-input"
+          placeholder="np. GBP"
           maxLength={3}
           value={newCode}
           onChange={(e) => setNewCode(e.target.value.toUpperCase())}
         />
-        <button className="btn-secondary" type="submit">
-          Dodaj walutę
+        <button className="btn-primary settings-add-form__submit" type="submit">
+          + Dodaj walutę
         </button>
       </form>
 

@@ -217,10 +217,11 @@ create policy "Admin edytuje profile (imiona/role)" on profiles
   for update using (is_admin());
 
 -- ---- trips ----
--- Jedyne konto to admin — trip_participants to tylko imiona do dzielenia
--- kosztów, nie lista kont z dostępem, więc dostęp = po prostu is_admin().
-create policy "Admin widzi wyjazdy" on trips
-  for select using (is_admin());
+-- Admin ma pełny dostęp, viewer (konto tylko do odczytu — "Przeglądający")
+-- widzi wszystko, ale nie może nic dodawać/edytować/usuwać (patrz insert/
+-- update/delete poniżej, cały czas ograniczone do is_admin()).
+create policy "Zalogowani widzą wyjazdy" on trips
+  for select using (auth.uid() is not null);
 
 create policy "Admin zarządza wyjazdami" on trips
   for insert with check (is_admin());
@@ -230,8 +231,8 @@ create policy "Admin usuwa wyjazdy" on trips
   for delete using (is_admin());
 
 -- ---- trip_participants ----
-create policy "Admin widzi uczestników" on trip_participants
-  for select using (is_admin());
+create policy "Zalogowani widzą uczestników" on trip_participants
+  for select using (auth.uid() is not null);
 create policy "Admin zarządza uczestnikami" on trip_participants
   for all using (is_admin()) with check (is_admin());
 
@@ -254,8 +255,8 @@ create policy "Admin usuwa waluty" on currencies
   for delete using (is_admin());
 
 -- ---- expenses ----
-create policy "Admin widzi wydatki" on expenses
-  for select using (is_admin());
+create policy "Zalogowani widzą wydatki" on expenses
+  for select using (auth.uid() is not null);
 create policy "Admin dodaje wydatki" on expenses
   for insert with check (is_admin());
 create policy "Admin edytuje wydatki" on expenses
@@ -264,8 +265,8 @@ create policy "Admin usuwa wydatki" on expenses
   for delete using (is_admin());
 
 -- ---- expense_payments ----
-create policy "Admin widzi płatności" on expense_payments
-  for select using (is_admin());
+create policy "Zalogowani widzą płatności" on expense_payments
+  for select using (auth.uid() is not null);
 create policy "Admin zarządza płatnościami" on expense_payments
   for all using (is_admin()) with check (is_admin());
 
@@ -276,14 +277,14 @@ create policy "Admin zarządza mapą" on visited_countries
   for all using (is_admin()) with check (is_admin());
 
 -- ---- itinerary_days ----
-create policy "Admin widzi plan" on itinerary_days
-  for select using (is_admin());
+create policy "Zalogowani widzą plan" on itinerary_days
+  for select using (auth.uid() is not null);
 create policy "Admin zarządza planem dni" on itinerary_days
   for all using (is_admin()) with check (is_admin());
 
 -- ---- itinerary_items ----
-create policy "Admin widzi punkty planu" on itinerary_items
-  for select using (is_admin());
+create policy "Zalogowani widzą punkty planu" on itinerary_items
+  for select using (auth.uid() is not null);
 create policy "Admin zarządza punktami planu" on itinerary_items
   for all using (is_admin()) with check (is_admin());
 

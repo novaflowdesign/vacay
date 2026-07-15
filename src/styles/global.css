@@ -1271,6 +1271,14 @@ button {
   width: auto !important;
 }
 
+.settings-row__currency-input {
+  width: 110px !important;
+  flex: none !important;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .settings-row button {
   background: rgba(28, 110, 104, 0.08);
   border: none;
@@ -1289,16 +1297,26 @@ button {
 }
 
 .settings-add-form {
-  flex-direction: row !important;
-  align-items: center;
-  margin-top: 12px;
-  gap: 8px !important;
+  flex-direction: column !important;
+  align-items: stretch;
+  margin-top: 16px;
+  gap: 10px !important;
+}
+
+.settings-add-form__row {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-add-form__submit {
+  width: 100%;
 }
 
 .theme-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 20px;
   margin-bottom: 20px;
   font-size: 15px;
   font-weight: 600;

@@ -133,23 +133,25 @@ export default function CategoriesManager() {
       </div>
 
       <form className="form settings-add-form" onSubmit={handleAdd}>
-        <input
-          type="text"
-          className="settings-row__icon-input"
-          placeholder="🛒"
-          maxLength={4}
-          value={newIcon}
-          onChange={(e) => setNewIcon(e.target.value)}
-        />
-        <input
-          type="text"
-          className="settings-row__name-input"
-          placeholder="Nazwa nowej kategorii"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <button className="btn-secondary" type="submit">
-          Dodaj kategorię
+        <div className="settings-add-form__row">
+          <input
+            type="text"
+            className="settings-row__icon-input"
+            placeholder="🛒"
+            maxLength={4}
+            value={newIcon}
+            onChange={(e) => setNewIcon(e.target.value)}
+          />
+          <input
+            type="text"
+            className="settings-row__name-input"
+            placeholder="Nazwa nowej kategorii"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
+        </div>
+        <button className="btn-primary settings-add-form__submit" type="submit">
+          + Dodaj kategorię
         </button>
       </form>
 
