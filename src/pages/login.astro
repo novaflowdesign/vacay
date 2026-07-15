@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LoginForm from '../components/LoginForm';
+import { withBase } from '../lib/url';
+import wordmark from '../assets/vacay-wordmark.svg';
+---
+
+<BaseLayout title="Logowanie">
+  <div class="page">
+    <div class="login-brand">
+      <img src={withBase('/icons/icon.svg')} alt="" class="login-brand__mark" />
+      <img src={wordmark.src} alt="Vacay" class="login-brand__wordmark" />
+    </div>
+    <h1 class="page-title login-brand__subtitle">Zaloguj się</h1>
+    <div class="card">
+      <LoginForm client:load />
+    </div>
+  </div>
+</BaseLayout>

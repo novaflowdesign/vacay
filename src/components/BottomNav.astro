@@ -1,0 +1,24 @@
+---
+import { NAV_TABS } from '../lib/navTabs';
+import Icon from './Icon.astro';
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<nav class="bottom-nav">
+  {
+    NAV_TABS.map((tab) => {
+      const tabPath = tab.href.replace(/\/$/, '') || '/';
+      const isActive = currentPath === tabPath;
+      return (
+        <a
+          href={tab.href}
+          class={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
+        >
+          <Icon name={tab.icon} class="bottom-nav__icon" />
+          <span>{tab.label}</span>
+        </a>
+      );
+    })
+  }
+</nav>

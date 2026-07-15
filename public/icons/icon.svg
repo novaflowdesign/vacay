@@ -1,0 +1,39 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F4C4A"/>
+      <stop offset="100%" stop-color="#164E4A"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB25A"/>
+      <stop offset="100%" stop-color="#F2542D"/>
+    </linearGradient>
+    <clipPath id="frame">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+    <clipPath id="sunClip">
+      <rect x="0" y="0" width="512" height="300"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+
+    <!-- Sun, clipped so only the top arc peeks above the horizon -->
+    <g clip-path="url(#sunClip)">
+      <circle cx="256" cy="320" r="118" fill="url(#sun)"/>
+    </g>
+
+    <!-- Horizon / wave band -->
+    <path d="M -20 300 C 120 260, 200 340, 320 300 C 400 274, 460 300, 532 288 L 532 340 L -20 340 Z"
+          fill="#1C6E68"/>
+    <path d="M -20 340 C 130 306, 220 366, 340 336 C 420 314, 470 336, 532 326 L 532 380 L -20 380 Z"
+          fill="#123F3D"/>
+
+    <!-- Departure arc, echoing the wordmark's flight path -->
+    <path d="M 118 178 C 180 118, 300 108, 372 156"
+          fill="none" stroke="#E8A33D" stroke-width="10"
+          stroke-dasharray="1 26" stroke-linecap="round"/>
+    <circle cx="372" cy="156" r="14" fill="#E8A33D"/>
+  </g>
+</svg>

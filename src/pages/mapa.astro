@@ -1,0 +1,12 @@
+---
+import AppShell from '../layouts/AppShell.astro';
+import RequireAuth from '../components/RequireAuth';
+---
+
+<AppShell title="Mapa">
+  <RequireAuth client:load />
+  <div class="page">
+    <h1 class="page-title">Mapa</h1>
+    <p class="state-message">Mapa odwiedzonych krajów — wkrótce.</p>
+  </div>
+</AppShell>

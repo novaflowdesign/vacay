@@ -1,0 +1,11 @@
+---
+import AppShell from '../layouts/AppShell.astro';
+import SettingsPanel from '../components/settings/SettingsPanel';
+---
+
+<AppShell title="Ustawienia" showSettings={false}>
+  <div class="page">
+    <h1 class="page-title">Ustawienia</h1>
+    <SettingsPanel client:load />
+  </div>
+</AppShell>

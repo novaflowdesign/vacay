@@ -1,0 +1,10 @@
+---
+import AppShell from '../../layouts/AppShell.astro';
+import TripDetail from '../../components/trip/TripDetail';
+---
+
+<AppShell title="Wyjazd">
+  <div class="page">
+    <TripDetail client:load />
+  </div>
+</AppShell>

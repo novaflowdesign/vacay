@@ -1,0 +1,37 @@
+---
+import { NAV_TABS } from '../lib/navTabs';
+import { withBase } from '../lib/url';
+import Icon from './Icon.astro';
+import wordmark from '../assets/vacay-wordmark.svg';
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+const settingsHref = withBase('/ustawienia');
+const settingsPath = settingsHref.replace(/\/$/, '') || '/';
+---
+
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <img src={wordmark.src} alt="Vacay" class="sidebar__wordmark" />
+  </div>
+  <nav class="sidebar__nav">
+    {
+      NAV_TABS.map((tab) => {
+        const tabPath = tab.href.replace(/\/$/, '') || '/';
+        const isActive = currentPath === tabPath;
+        return (
+          <a href={tab.href} class={`sidebar__item ${isActive ? 'sidebar__item--active' : ''}`}>
+            <Icon name={tab.icon} class="sidebar__icon" />
+            <span>{tab.label}</span>
+          </a>
+        );
+      })
+    }
+  </nav>
+  <a
+    href={settingsHref}
+    class={`sidebar__item sidebar__item--settings ${currentPath === settingsPath ? 'sidebar__item--active' : ''}`}
+  >
+    <Icon name="settings" class="sidebar__icon" />
+    <span>Ustawienia</span>
+  </a>
+</aside>

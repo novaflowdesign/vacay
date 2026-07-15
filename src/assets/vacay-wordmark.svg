@@ -1,0 +1,14 @@
+<svg width="640" height="150" viewBox="0 0 640 150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F4C4A"/>
+      <stop offset="100%" stop-color="#1C6E68"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Wordmark -->
+  <text x="50" y="112"
+        font-family="'Baloo 2','Quicksand','Poppins','Segoe UI',sans-serif"
+        font-weight="700" font-size="108" letter-spacing="-1"
+        fill="url(#textGrad)">Vacay</text>
+</svg>

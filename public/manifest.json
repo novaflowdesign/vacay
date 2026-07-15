@@ -1,0 +1,15 @@
+{
+  "name": "Vacay",
+  "short_name": "Vacay",
+  "description": "Śledzenie wydatków, mapy i planów wyjazdowych",
+  "start_url": "/vacay/",
+  "scope": "/vacay/",
+  "display": "standalone",
+  "background_color": "#0F4C4A",
+  "theme_color": "#0F4C4A",
+  "icons": [
+    { "src": "/vacay/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/vacay/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/vacay/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

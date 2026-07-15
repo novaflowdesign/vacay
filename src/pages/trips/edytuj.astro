@@ -1,0 +1,11 @@
+---
+import AppShell from '../../layouts/AppShell.astro';
+import TripForm from '../../components/TripForm';
+---
+
+<AppShell title="Edytuj wyjazd">
+  <div class="page">
+    <h1 class="page-title">Edytuj wyjazd</h1>
+    <TripForm client:load />
+  </div>
+</AppShell>

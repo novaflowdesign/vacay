@@ -1,0 +1,34 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import BottomNav from '../components/BottomNav.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Icon from '../components/Icon.astro';
+import { withBase } from '../lib/url';
+
+interface Props {
+  title: string;
+  showSettings?: boolean;
+}
+
+const { title, showSettings = true } = Astro.props;
+---
+
+<BaseLayout title={title}>
+  <div class="app-shell">
+    <Sidebar />
+    <div class="app-main">
+      {
+        showSettings && (
+          <div class="top-bar">
+            <span />
+            <a class="top-bar__settings" href={withBase('/ustawienia')} aria-label="Ustawienia">
+              <Icon name="settings" />
+            </a>
+          </div>
+        )
+      }
+      <slot />
+    </div>
+  </div>
+  <BottomNav />
+</BaseLayout>
