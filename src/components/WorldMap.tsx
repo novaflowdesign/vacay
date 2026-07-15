@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { feature } from 'topojson-client';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { TransformWrapper, TransformComponent, useControls } from 'react-zoom-pan-pinch';
@@ -123,6 +124,91 @@ function FullscreenMap({ countries, visited, isAdmin, onCountryClick, onClose }:
           </svg>
         </TransformComponent>
       </TransformWrapper>
+    </div>
+  );
+}
+
+interface AddCountryDialogProps {
+  country: CountryFeature;
+  onClose: () => void;
+  onAdded: (alpha2: string) => void;
+}
+
+function AddCountryDialog({ country, onClose, onAdded }: AddCountryDialogProps) {
+  const [locality, setLocality] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function handleConfirm(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    const { error: insertError } = await supabase.from('visited_countries').insert({ country_code: country.alpha2 });
+    if (insertError) {
+      setSaving(false);
+      setError('Nie udało się dodać kraju.');
+      return;
+    }
+
+    const name = locality.trim();
+    if (name) {
+      const { error: localityError } = await supabase
+        .from('visited_localities')
+        .insert({ country_code: country.alpha2, name });
+      if (localityError) {
+        setSaving(false);
+        setError('Kraj dodany, ale nie udało się zapisać miejscowości.');
+        return;
+      }
+    }
+
+    setSaving(false);
+    onAdded(country.alpha2);
+  }
+
+  return (
+    <div
+      className="country-card-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="card country-card">
+        <div className="country-card__header">
+          <h2 className="country-card__title">
+            {countryCodeToFlag(country.alpha2)} {country.name}
+          </h2>
+          <button type="button" className="country-card__close" onClick={onClose} aria-label="Zamknij">
+            <IconClose />
+          </button>
+        </div>
+
+        <p className="form-hint">Dodać ten kraj do odwiedzonych?</p>
+
+        <form className="form" onSubmit={handleConfirm}>
+          <label>
+            Miejscowość (opcjonalnie)
+            <input
+              type="text"
+              value={locality}
+              onChange={(e) => setLocality(e.target.value)}
+              placeholder="np. Barcelona"
+            />
+          </label>
+
+          {error && <p className="form-error">{error}</p>}
+
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={saving}>
+              Anuluj
+            </button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              Dodaj do odwiedzonych
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -273,6 +359,7 @@ export default function WorldMap() {
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryFeature | null>(null);
+  const [addingCountry, setAddingCountry] = useState<CountryFeature | null>(null);
 
   useEffect(() => {
     if (session === null) {
@@ -322,26 +409,25 @@ export default function WorldMap() {
     return result.sort((a, b) => a.name.localeCompare(b.name, 'pl'));
   }, []);
 
-  async function addVisited(alpha2: string) {
-    setError(null);
-    const { error: insertError } = await supabase.from('visited_countries').insert({ country_code: alpha2 });
-    if (insertError) {
-      setError('Nie udało się zaktualizować mapy.');
-      return;
-    }
-    setVisited((prev) => new Set(prev).add(alpha2));
-  }
-
   function handleCountryClick(alpha2: string) {
     if (!visited) return;
+    const country = countries.find((c) => c.alpha2 === alpha2);
+    if (!country) return;
 
     if (!visited.has(alpha2)) {
-      if (isAdmin) addVisited(alpha2);
+      if (!isAdmin) return;
+      setIsFullscreen(false);
+      setAddingCountry(country);
       return;
     }
 
-    const country = countries.find((c) => c.alpha2 === alpha2);
-    if (country) setSelectedCountry(country);
+    setIsFullscreen(false);
+    setSelectedCountry(country);
+  }
+
+  function handleCountryAdded(alpha2: string) {
+    setVisited((prev) => new Set(prev).add(alpha2));
+    setAddingCountry(null);
   }
 
   function handleCountryRemoved(alpha2: string) {
@@ -413,24 +499,38 @@ export default function WorldMap() {
         </div>
       )}
 
-      {isFullscreen && (
-        <FullscreenMap
-          countries={countries}
-          visited={visited}
-          isAdmin={isAdmin}
-          onCountryClick={handleCountryClick}
-          onClose={() => setIsFullscreen(false)}
-        />
-      )}
+      {isFullscreen &&
+        createPortal(
+          <FullscreenMap
+            countries={countries}
+            visited={visited}
+            isAdmin={isAdmin}
+            onCountryClick={handleCountryClick}
+            onClose={() => setIsFullscreen(false)}
+          />,
+          document.body
+        )}
 
-      {selectedCountry && (
-        <CountryDetailCard
-          country={selectedCountry}
-          isAdmin={isAdmin}
-          onClose={() => setSelectedCountry(null)}
-          onRemoved={handleCountryRemoved}
-        />
-      )}
+      {addingCountry &&
+        createPortal(
+          <AddCountryDialog
+            country={addingCountry}
+            onClose={() => setAddingCountry(null)}
+            onAdded={handleCountryAdded}
+          />,
+          document.body
+        )}
+
+      {selectedCountry &&
+        createPortal(
+          <CountryDetailCard
+            country={selectedCountry}
+            isAdmin={isAdmin}
+            onClose={() => setSelectedCountry(null)}
+            onRemoved={handleCountryRemoved}
+          />,
+          document.body
+        )}
     </div>
   );
 }
