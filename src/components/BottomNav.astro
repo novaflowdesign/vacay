@@ -16,7 +16,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
           class={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
         >
           <Icon name={tab.icon} class="bottom-nav__icon" />
-          <span>{tab.label}</span>
+          <span class="bottom-nav__label">{tab.label}</span>
         </a>
       );
     })
