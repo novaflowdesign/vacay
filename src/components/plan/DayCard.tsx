@@ -6,7 +6,8 @@ import type { ItineraryDay, ItineraryItem } from '../../lib/types';
 const ITEM_CATEGORIES = [
   { value: 'zwiedzanie', label: 'Zwiedzanie', icon: '🏛️' },
   { value: 'jedzenie', label: 'Jedzenie', icon: '🍽️' },
-  { value: 'transport', label: 'Transport', icon: '🚗' },
+  { value: 'transport', label: 'Podróż', icon: '🚗' },
+  { value: 'lot', label: 'Lot', icon: '✈️' },
   { value: 'odpoczynek', label: 'Odpoczynek', icon: '🏖️' },
 ];
 
