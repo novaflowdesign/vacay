@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import { useSession } from '../../lib/useSession';
 import { useProfile } from '../../lib/useProfile';
 import { withBase } from '../../lib/url';
@@ -9,12 +10,19 @@ import ThemeToggle from './ThemeToggle';
 export default function SettingsPanel() {
   const session = useSession();
   const profile = useProfile();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (session === null) {
       window.location.replace(withBase('/login'));
     }
   }, [session]);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    window.location.replace(withBase('/login'));
+  }
 
   if (session === undefined || profile === undefined) {
     return <p className="state-message">Wczytywanie…</p>;
@@ -48,6 +56,10 @@ export default function SettingsPanel() {
           <CurrenciesManager />
         </>
       )}
+
+      <button className="btn-danger block-add" type="button" onClick={handleLogout} disabled={loggingOut}>
+        {loggingOut ? 'Wylogowywanie…' : 'Wyloguj'}
+      </button>
     </div>
   );
 }
