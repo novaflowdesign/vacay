@@ -109,16 +109,19 @@ function FullscreenMap({ countries, visited, onCountryClick, onClose }: Fullscre
           contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="world-map world-map--fullscreen">
-            {countries.map((c) => (
-              <path
-                key={c.alpha2}
-                d={c.path}
-                className={countryClassName(c.alpha2, visited, true)}
-                onClick={() => onCountryClick(c.alpha2)}
-              >
-                <title>{c.name}</title>
-              </path>
-            ))}
+            {countries.map((c) => {
+              const isHome = c.alpha2 === HOME_COUNTRY;
+              return (
+                <path
+                  key={c.alpha2}
+                  d={c.path}
+                  className={countryClassName(c.alpha2, visited, !isHome)}
+                  onClick={isHome ? undefined : () => onCountryClick(c.alpha2)}
+                >
+                  <title>{c.name}</title>
+                </path>
+              );
+            })}
           </svg>
         </TransformComponent>
       </TransformWrapper>
@@ -461,7 +464,7 @@ export default function WorldMap() {
   }, []);
 
   function handleCountryClick(alpha2: string) {
-    if (!visited) return;
+    if (!visited || alpha2 === HOME_COUNTRY) return;
     const country = countries.find((c) => c.alpha2 === alpha2);
     if (!country) return;
 
