@@ -36,31 +36,31 @@ interface ItemFormProps {
 function ItemForm({ draft, setDraft, onSubmit, onCancel, error, submitLabel }: ItemFormProps) {
   return (
     <form className="form itinerary-item-form" onSubmit={onSubmit}>
-      <div className="itinerary-item-form__row">
-        <div className="itinerary-item-form__time">
-          <label htmlFor="itemTime">Godzina</label>
-          <input
-            id="itemTime"
-            type="time"
-            value={draft.time}
-            onChange={(e) => setDraft({ ...draft, time: e.target.value })}
-          />
-        </div>
-        <div>
-          <label htmlFor="itemCategory">Kategoria</label>
-          <select
-            id="itemCategory"
-            value={draft.category}
-            onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-          >
-            <option value="">Brak</option>
-            {ITEM_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.icon} {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label htmlFor="itemTime">Godzina</label>
+        <input
+          id="itemTime"
+          type="text"
+          inputMode="numeric"
+          placeholder="np. 10:00"
+          value={draft.time}
+          onChange={(e) => setDraft({ ...draft, time: e.target.value })}
+        />
+      </div>
+      <div>
+        <label htmlFor="itemCategory">Kategoria</label>
+        <select
+          id="itemCategory"
+          value={draft.category}
+          onChange={(e) => setDraft({ ...draft, category: e.target.value })}
+        >
+          <option value="">Brak</option>
+          {ITEM_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.icon} {c.label}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label htmlFor="itemTitle">Co robimy</label>
