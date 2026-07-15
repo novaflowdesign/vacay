@@ -142,6 +142,14 @@ create table visited_countries (
   unique (country_code)
 );
 
+create table visited_localities (
+  id uuid primary key default gen_random_uuid(),
+  country_code text not null references visited_countries(country_code) on delete cascade,
+  name text not null,                  -- np. "Barcelona"
+  created_by uuid references profiles(id),
+  created_at timestamptz not null default now()
+);
+
 
 -- ============================================================
 -- 6. PLAN WYJAZDU (dzień po dniu)
@@ -197,6 +205,7 @@ alter table currencies enable row level security;
 alter table expenses enable row level security;
 alter table expense_payments enable row level security;
 alter table visited_countries enable row level security;
+alter table visited_localities enable row level security;
 alter table itinerary_days enable row level security;
 alter table itinerary_items enable row level security;
 alter table place_tips enable row level security;
@@ -274,6 +283,12 @@ create policy "Admin zarządza płatnościami" on expense_payments
 create policy "Wszyscy widzą mapę" on visited_countries
   for select using (auth.uid() is not null);
 create policy "Admin zarządza mapą" on visited_countries
+  for all using (is_admin()) with check (is_admin());
+
+-- ---- visited_localities ----
+create policy "Wszyscy widzą miejscowości" on visited_localities
+  for select using (auth.uid() is not null);
+create policy "Admin zarządza miejscowościami" on visited_localities
   for all using (is_admin()) with check (is_admin());
 
 -- ---- itinerary_days ----

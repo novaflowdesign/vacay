@@ -30,6 +30,14 @@ export interface Currency {
   code: string;
 }
 
+export interface VisitedLocality {
+  id: string;
+  country_code: string;
+  name: string;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface TripParticipant {
   id: string;
   trip_id: string;

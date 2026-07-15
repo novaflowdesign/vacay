@@ -16,6 +16,7 @@
     "i18n-iso-countries": "^7.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-zoom-pan-pinch": "^4.0.3",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },

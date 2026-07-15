@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { feature } from 'topojson-client';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { TransformWrapper, TransformComponent, useControls } from 'react-zoom-pan-pinch';
 // Named-export interop for this CJS module works in dev but not in Astro's
 // build-time Node ESM loader — import the default and destructure instead.
 import isoCountries from 'i18n-iso-countries';
@@ -11,12 +12,14 @@ import { useSession } from '../lib/useSession';
 import { useProfile } from '../lib/useProfile';
 import { withBase } from '../lib/url';
 import { countryCodeToFlag } from '../lib/format';
+import type { VisitedLocality } from '../lib/types';
 import worldTopology from 'world-atlas/countries-110m.json';
 
 const { numericToAlpha2 } = isoCountries;
 
 const WIDTH = 960;
 const HEIGHT = 500;
+const HOME_COUNTRY = 'PL';
 
 interface CountryFeature {
   alpha2: string;
@@ -32,6 +35,235 @@ function polishCountryName(alpha2: string, fallback: string): string {
   }
 }
 
+function countryClassName(alpha2: string, visited: Set<string>, clickable: boolean): string {
+  const classes = ['world-map__country'];
+  if (visited.has(alpha2)) classes.push('world-map__country--visited');
+  if (alpha2 === HOME_COUNTRY) classes.push('world-map__country--home');
+  if (clickable) classes.push('world-map__country--clickable');
+  return classes.join(' ');
+}
+
+function IconClose() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function IconPlus() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function IconMinus() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+function IconExpand() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+    </svg>
+  );
+}
+
+function ZoomControls() {
+  const { zoomIn, zoomOut } = useControls();
+  return (
+    <div className="map-fullscreen__zoom">
+      <button type="button" onClick={() => zoomIn()} aria-label="Przybliż">
+        <IconPlus />
+      </button>
+      <button type="button" onClick={() => zoomOut()} aria-label="Oddal">
+        <IconMinus />
+      </button>
+    </div>
+  );
+}
+
+interface FullscreenMapProps {
+  countries: CountryFeature[];
+  visited: Set<string>;
+  isAdmin: boolean;
+  onCountryClick: (alpha2: string) => void;
+  onClose: () => void;
+}
+
+function FullscreenMap({ countries, visited, isAdmin, onCountryClick, onClose }: FullscreenMapProps) {
+  return (
+    <div className="map-fullscreen">
+      <button type="button" className="map-fullscreen__close" onClick={onClose} aria-label="Zamknij mapę">
+        <IconClose />
+      </button>
+      <TransformWrapper initialScale={1} minScale={1} maxScale={8} centerOnInit doubleClick={{ mode: 'zoomIn' }}>
+        <ZoomControls />
+        <TransformComponent
+          wrapperStyle={{ width: '100%', height: '100%' }}
+          contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="world-map world-map--fullscreen">
+            {countries.map((c) => (
+              <path
+                key={c.alpha2}
+                d={c.path}
+                className={countryClassName(c.alpha2, visited, isAdmin || visited.has(c.alpha2))}
+                onClick={() => onCountryClick(c.alpha2)}
+              >
+                <title>{c.name}</title>
+              </path>
+            ))}
+          </svg>
+        </TransformComponent>
+      </TransformWrapper>
+    </div>
+  );
+}
+
+interface CountryDetailCardProps {
+  country: CountryFeature;
+  isAdmin: boolean;
+  onClose: () => void;
+  onRemoved: (alpha2: string) => void;
+}
+
+function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDetailCardProps) {
+  const [localities, setLocalities] = useState<VisitedLocality[] | null>(null);
+  const [newLocality, setNewLocality] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  async function loadLocalities() {
+    const { data, error: fetchError } = await supabase
+      .from('visited_localities')
+      .select('*')
+      .eq('country_code', country.alpha2)
+      .order('name');
+    if (fetchError) {
+      setError('Nie udało się wczytać miejscowości.');
+      return;
+    }
+    setLocalities((data as VisitedLocality[]) ?? []);
+  }
+
+  useEffect(() => {
+    setLocalities(null);
+    loadLocalities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country.alpha2]);
+
+  async function handleAddLocality(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newLocality.trim();
+    if (!name) return;
+    setError(null);
+
+    const { error: insertError } = await supabase
+      .from('visited_localities')
+      .insert({ country_code: country.alpha2, name });
+
+    if (insertError) {
+      setError('Nie udało się dodać miejscowości.');
+      return;
+    }
+
+    setNewLocality('');
+    loadLocalities();
+  }
+
+  async function handleDeleteLocality(id: string) {
+    const { error: deleteError } = await supabase.from('visited_localities').delete().eq('id', id);
+    if (deleteError) {
+      setError('Nie udało się usunąć miejscowości.');
+      return;
+    }
+    setLocalities((prev) => (prev ?? []).filter((l) => l.id !== id));
+  }
+
+  async function handleRemoveCountry() {
+    if (!window.confirm(`Usunąć ${country.name} z odwiedzonych krajów?`)) return;
+    setRemoving(true);
+    const { error: deleteError } = await supabase.from('visited_countries').delete().eq('country_code', country.alpha2);
+    setRemoving(false);
+
+    if (deleteError) {
+      setError('Nie udało się usunąć kraju.');
+      return;
+    }
+    onRemoved(country.alpha2);
+  }
+
+  return (
+    <div
+      className="country-card-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="card country-card">
+        <div className="country-card__header">
+          <h2 className="country-card__title">
+            {countryCodeToFlag(country.alpha2)} {country.name}
+          </h2>
+          <button type="button" className="country-card__close" onClick={onClose} aria-label="Zamknij">
+            <IconClose />
+          </button>
+        </div>
+
+        <p className="country-card__section-title">Miejscowości</p>
+
+        {localities === null && <p className="state-message">Wczytywanie…</p>}
+        {localities !== null && localities.length === 0 && <p className="form-hint">Brak zapisanych miejscowości.</p>}
+
+        {localities !== null && localities.length > 0 && (
+          <div className="settings-list">
+            {localities.map((l) => (
+              <div key={l.id} className="settings-row">
+                <span className="settings-row__label">{l.name}</span>
+                {isAdmin && (
+                  <button type="button" onClick={() => handleDeleteLocality(l.id)}>
+                    Usuń
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {isAdmin && (
+          <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
+            <input
+              type="text"
+              className="settings-row__name-input"
+              placeholder="Nazwa miejscowości"
+              value={newLocality}
+              onChange={(e) => setNewLocality(e.target.value)}
+            />
+            <button className="btn-primary" type="submit">
+              + Dodaj
+            </button>
+          </form>
+        )}
+
+        {error && <p className="form-error">{error}</p>}
+
+        {isAdmin && (
+          <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
+            Usuń kraj z mapy
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function WorldMap() {
   const session = useSession();
   const profile = useProfile();
@@ -39,6 +271,8 @@ export default function WorldMap() {
 
   const [visited, setVisited] = useState<Set<string> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<CountryFeature | null>(null);
 
   useEffect(() => {
     if (session === null) {
@@ -88,29 +322,36 @@ export default function WorldMap() {
     return result.sort((a, b) => a.name.localeCompare(b.name, 'pl'));
   }, []);
 
-  async function toggleCountry(alpha2: string) {
-    if (!isAdmin || !visited) return;
+  async function addVisited(alpha2: string) {
     setError(null);
-
-    if (visited.has(alpha2)) {
-      const { error: deleteError } = await supabase.from('visited_countries').delete().eq('country_code', alpha2);
-      if (deleteError) {
-        setError('Nie udało się zaktualizować mapy.');
-        return;
-      }
-      setVisited((prev) => {
-        const next = new Set(prev);
-        next.delete(alpha2);
-        return next;
-      });
-    } else {
-      const { error: insertError } = await supabase.from('visited_countries').insert({ country_code: alpha2 });
-      if (insertError) {
-        setError('Nie udało się zaktualizować mapy.');
-        return;
-      }
-      setVisited((prev) => new Set(prev).add(alpha2));
+    const { error: insertError } = await supabase.from('visited_countries').insert({ country_code: alpha2 });
+    if (insertError) {
+      setError('Nie udało się zaktualizować mapy.');
+      return;
     }
+    setVisited((prev) => new Set(prev).add(alpha2));
+  }
+
+  function handleCountryClick(alpha2: string) {
+    if (!visited) return;
+
+    if (!visited.has(alpha2)) {
+      if (isAdmin) addVisited(alpha2);
+      return;
+    }
+
+    const country = countries.find((c) => c.alpha2 === alpha2);
+    if (country) setSelectedCountry(country);
+  }
+
+  function handleCountryRemoved(alpha2: string) {
+    setVisited((prev) => {
+      if (!prev) return prev;
+      const next = new Set(prev);
+      next.delete(alpha2);
+      return next;
+    });
+    setSelectedCountry(null);
   }
 
   if (session === undefined || visited === null) {
@@ -125,43 +366,70 @@ export default function WorldMap() {
 
   return (
     <div>
-      <div className="card map-card">
+      <div
+        className="card map-card"
+        onClick={() => setIsFullscreen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setIsFullscreen(true);
+        }}
+      >
         <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="world-map">
           {countries.map((c) => (
-            <path
-              key={c.alpha2}
-              d={c.path}
-              className={`world-map__country ${visited.has(c.alpha2) ? 'world-map__country--visited' : ''} ${
-                isAdmin ? 'world-map__country--clickable' : ''
-              }`}
-              onClick={() => toggleCountry(c.alpha2)}
-            >
+            <path key={c.alpha2} d={c.path} className={countryClassName(c.alpha2, visited, false)}>
               <title>{c.name}</title>
             </path>
           ))}
         </svg>
+        <p className="map-card__expand-hint">
+          <IconExpand /> Powiększ mapę
+        </p>
       </div>
 
       {error && <p className="state-message">{error}</p>}
 
       <p className="form-hint map-count">Odwiedzone kraje: {visitedList.length}</p>
-      {isAdmin && <p className="form-hint">Stuknij kraj na mapie, żeby zaznaczyć go jako odwiedzony.</p>}
 
       {visitedList.length > 0 && (
         <div className="card settings-list visited-list">
           {visitedList.map((c) => (
-            <div key={c.alpha2} className="settings-row">
+            <div
+              key={c.alpha2}
+              className="settings-row visited-list__row"
+              onClick={() => setSelectedCountry(c)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setSelectedCountry(c);
+              }}
+            >
               <span className="settings-row__label">
                 {countryCodeToFlag(c.alpha2)} {c.name}
               </span>
-              {isAdmin && (
-                <button type="button" onClick={() => toggleCountry(c.alpha2)}>
-                  Usuń
-                </button>
-              )}
+              <span className="settings-row__chevron">›</span>
             </div>
           ))}
         </div>
+      )}
+
+      {isFullscreen && (
+        <FullscreenMap
+          countries={countries}
+          visited={visited}
+          isAdmin={isAdmin}
+          onCountryClick={handleCountryClick}
+          onClose={() => setIsFullscreen(false)}
+        />
+      )}
+
+      {selectedCountry && (
+        <CountryDetailCard
+          country={selectedCountry}
+          isAdmin={isAdmin}
+          onClose={() => setSelectedCountry(null)}
+          onRemoved={handleCountryRemoved}
+        />
       )}
     </div>
   );

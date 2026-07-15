@@ -9,6 +9,7 @@
   --color-primary: #1C6E68;
   --color-primary-strong: #0F4C4A;
   --color-primary-rgb: 28, 110, 104;
+  --color-home: #d97706;
   --color-border: rgba(255, 255, 255, 0.6);
   --color-ink-rgb: 17, 24, 39;
   --color-border-subtle: rgba(var(--color-ink-rgb), 0.08);
@@ -49,6 +50,7 @@
     --color-primary: #2bb0a1;
     --color-primary-strong: #1c6e68;
     --color-primary-rgb: 43, 176, 161;
+    --color-home: #f59e0b;
     --color-border: rgba(255, 255, 255, 0.12);
     --color-ink-rgb: 255, 255, 255;
     --color-danger: #f87171;
@@ -73,6 +75,7 @@
   --color-primary: #2bb0a1;
   --color-primary-strong: #1c6e68;
   --color-primary-rgb: 43, 176, 161;
+  --color-home: #f59e0b;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-ink-rgb: 255, 255, 255;
   --color-danger: #f87171;
@@ -1659,6 +1662,7 @@ button {
 
 .map-card {
   padding: 10px;
+  cursor: pointer;
 }
 
 .world-map {
@@ -1678,12 +1682,32 @@ button {
   fill: var(--color-primary);
 }
 
+.world-map__country--home {
+  fill: var(--color-home);
+}
+
 .world-map__country--clickable {
   cursor: pointer;
 }
 
 .world-map__country--clickable:hover {
   fill: rgba(var(--color-primary-rgb), 0.55);
+}
+
+.map-card__expand-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.map-card__expand-hint svg {
+  width: 16px;
+  height: 16px;
 }
 
 .map-count {
@@ -1696,4 +1720,153 @@ button {
 
 .visited-list {
   margin-top: 12px;
+}
+
+.visited-list__row {
+  cursor: pointer;
+}
+
+.settings-row__chevron {
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Mapa — widok pełnoekranowy */
+
+.map-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--gradient-mesh), var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s var(--ease-out) both;
+}
+
+.world-map--fullscreen {
+  width: 90vw;
+  height: auto;
+  touch-action: none;
+}
+
+.map-fullscreen__close,
+.map-fullscreen__zoom button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-glass);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-spring);
+}
+
+.map-fullscreen__close:active,
+.map-fullscreen__zoom button:active {
+  transform: scale(0.92);
+}
+
+.map-fullscreen__close svg,
+.map-fullscreen__zoom svg {
+  width: 20px;
+  height: 20px;
+}
+
+.map-fullscreen__close {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  right: 16px;
+  z-index: 210;
+}
+
+.map-fullscreen__zoom {
+  position: fixed;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  z-index: 210;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Mapa — karta kraju */
+
+.country-card-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(var(--color-ink-rgb), 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s var(--ease-out) both;
+}
+
+@media (min-width: 640px) {
+  .country-card-backdrop {
+    align-items: center;
+  }
+}
+
+.country-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: popIn 0.2s var(--ease-spring) both;
+}
+
+.country-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.country-card__title {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.country-card__close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  flex: none;
+}
+
+.country-card__close svg {
+  width: 22px;
+  height: 22px;
+}
+
+.country-card__section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.country-card__remove {
+  width: 100%;
+  margin-top: 20px;
 }
