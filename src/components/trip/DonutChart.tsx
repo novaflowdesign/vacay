@@ -19,7 +19,6 @@ const CENTER = SIZE / 2;
 const RADIUS = 70;
 const STROKE = 26;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const GAP = 3;
 
 export default function DonutChart({ slices, total, currency }: DonutChartProps) {
   const [hovered, setHovered] = useState<number | null>(null);
@@ -66,7 +65,7 @@ export default function DonutChart({ slices, total, currency }: DonutChartProps)
                 fill="none"
                 stroke={seg.color}
                 strokeWidth={hovered === seg.index ? STROKE + 4 : STROKE}
-                strokeDasharray={`${Math.max(seg.length - GAP, 0)} ${CIRCUMFERENCE}`}
+                strokeDasharray={`${seg.length} ${CIRCUMFERENCE}`}
                 strokeDashoffset={-seg.offset}
                 strokeLinecap="butt"
                 tabIndex={0}

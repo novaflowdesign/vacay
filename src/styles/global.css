@@ -46,6 +46,10 @@ body {
     radial-gradient(circle at 90% 85%, rgba(153, 246, 228, 0.25), transparent 50%),
     var(--color-bg);
   background-attachment: fixed;
+  /* Standalone PWA on iOS has no browser chrome — the status bar (clock,
+     signal, battery) sits directly over the viewport, so content needs its
+     own top clearance. viewport-fit=cover in the meta tag makes this non-zero. */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 a {
@@ -198,7 +202,26 @@ button {
   justify-content: space-between;
   max-width: 640px;
   margin: 0 auto;
-  padding: 16px 16px 0;
+  padding: 12px 16px;
+}
+
+.top-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-bar__mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: block;
+}
+
+.top-bar__wordmark {
+  height: 18px;
+  width: auto;
+  display: block;
 }
 
 .top-bar__settings {

@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.astro';
 import Sidebar from '../components/Sidebar.astro';
 import Icon from '../components/Icon.astro';
 import { withBase } from '../lib/url';
+import wordmark from '../assets/vacay-wordmark.svg';
 
 interface Props {
   title: string;
@@ -17,16 +18,19 @@ const { title, showSettings = true } = Astro.props;
   <div class="app-shell">
     <Sidebar />
     <div class="app-main">
-      {
-        showSettings && (
-          <div class="top-bar">
-            <span />
+      <div class="top-bar">
+        <div class="top-bar__brand">
+          <img src={withBase('/icons/icon.svg')} alt="" class="top-bar__mark" />
+          <img src={wordmark.src} alt="Vacay" class="top-bar__wordmark" />
+        </div>
+        {
+          showSettings && (
             <a class="top-bar__settings" href={withBase('/ustawienia')} aria-label="Ustawienia">
               <Icon name="settings" />
             </a>
-          </div>
-        )
-      }
+          )
+        }
+      </div>
       <slot />
     </div>
   </div>
