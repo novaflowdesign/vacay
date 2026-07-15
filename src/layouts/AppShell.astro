@@ -19,17 +19,19 @@ const { title, showSettings = true } = Astro.props;
     <Sidebar />
     <div class="app-main">
       <div class="top-bar">
-        <div class="top-bar__brand">
-          <img src={withBase('/icons/icon.svg')} alt="" class="top-bar__mark" />
-          <img src={wordmark.src} alt="Vacay" class="top-bar__wordmark" />
+        <div class="top-bar__inner">
+          <div class="top-bar__brand">
+            <img src={withBase('/icons/icon.svg')} alt="" class="top-bar__mark" />
+            <img src={wordmark.src} alt="Vacay" class="top-bar__wordmark" />
+          </div>
+          {
+            showSettings && (
+              <a class="top-bar__settings" href={withBase('/ustawienia')} aria-label="Ustawienia">
+                <Icon name="settings" />
+              </a>
+            )
+          }
         </div>
-        {
-          showSettings && (
-            <a class="top-bar__settings" href={withBase('/ustawienia')} aria-label="Ustawienia">
-              <Icon name="settings" />
-            </a>
-          )
-        }
       </div>
       <slot />
     </div>

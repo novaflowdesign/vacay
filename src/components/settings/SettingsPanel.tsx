@@ -4,6 +4,7 @@ import { useProfile } from '../../lib/useProfile';
 import { withBase } from '../../lib/url';
 import CategoriesManager from './CategoriesManager';
 import CurrenciesManager from './CurrenciesManager';
+import ThemeToggle from './ThemeToggle';
 
 export default function SettingsPanel() {
   const session = useSession();
@@ -35,6 +36,8 @@ export default function SettingsPanel() {
           <span>{profile?.role === 'admin' ? 'Administrator' : 'Podgląd'}</span>
         </div>
       </div>
+
+      <ThemeToggle />
 
       {profile?.role === 'admin' && (
         <>

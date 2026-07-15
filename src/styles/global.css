@@ -1,14 +1,16 @@
 :root {
+  color-scheme: light;
   --color-bg: #f5f6fb;
   --color-surface: rgba(255, 255, 255, 0.55);
   --color-surface-strong: rgba(255, 255, 255, 0.75);
   --color-surface-solid: #ffffff;
   --color-text: #1a1c20;
   --color-text-muted: #6b7280;
-  --color-primary: #2563eb;
-  --color-primary-strong: #1d4ed8;
+  --color-primary: #1C6E68;
+  --color-primary-strong: #0F4C4A;
   --color-border: rgba(255, 255, 255, 0.6);
-  --color-border-subtle: rgba(17, 24, 39, 0.08);
+  --color-ink-rgb: 17, 24, 39;
+  --color-border-subtle: rgba(var(--color-ink-rgb), 0.08);
   --color-danger: #dc2626;
   --nav-height: 76px;
 
@@ -23,6 +25,77 @@
 
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --gradient-mesh:
+    radial-gradient(circle at 12% 8%, rgba(147, 197, 253, 0.35), transparent 45%),
+    radial-gradient(circle at 88% 15%, rgba(196, 181, 253, 0.3), transparent 50%),
+    radial-gradient(circle at 25% 90%, rgba(253, 186, 220, 0.22), transparent 50%),
+    radial-gradient(circle at 90% 85%, rgba(153, 246, 228, 0.25), transparent 50%);
+}
+
+/* Dark mode — applied automatically from OS preference, or forced by the
+   toggle in Ustawienia via [data-theme] on <html> (which always wins, in
+   either direction, over the OS setting). */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+    --color-bg: #0e1512;
+    --color-surface: rgba(255, 255, 255, 0.06);
+    --color-surface-strong: rgba(255, 255, 255, 0.1);
+    --color-surface-solid: #1a211e;
+    --color-text: #eef1f0;
+    --color-text-muted: #98a29c;
+    --color-primary: #2bb0a1;
+    --color-primary-strong: #1c6e68;
+    --color-border: rgba(255, 255, 255, 0.12);
+    --color-ink-rgb: 255, 255, 255;
+    --color-danger: #f87171;
+    --shadow-glass: 0 8px 30px rgba(0, 0, 0, 0.35);
+    --shadow-glass-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --gradient-mesh:
+      radial-gradient(circle at 12% 8%, rgba(43, 176, 161, 0.16), transparent 45%),
+      radial-gradient(circle at 88% 15%, rgba(120, 90, 200, 0.14), transparent 50%),
+      radial-gradient(circle at 25% 90%, rgba(200, 90, 140, 0.1), transparent 50%),
+      radial-gradient(circle at 90% 85%, rgba(43, 176, 161, 0.12), transparent 50%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0e1512;
+  --color-surface: rgba(255, 255, 255, 0.06);
+  --color-surface-strong: rgba(255, 255, 255, 0.1);
+  --color-surface-solid: #1a211e;
+  --color-text: #eef1f0;
+  --color-text-muted: #98a29c;
+  --color-primary: #2bb0a1;
+  --color-primary-strong: #1c6e68;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-ink-rgb: 255, 255, 255;
+  --color-danger: #f87171;
+  --shadow-glass: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-glass-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --gradient-mesh:
+    radial-gradient(circle at 12% 8%, rgba(43, 176, 161, 0.16), transparent 45%),
+    radial-gradient(circle at 88% 15%, rgba(120, 90, 200, 0.14), transparent 50%),
+    radial-gradient(circle at 25% 90%, rgba(200, 90, 140, 0.1), transparent 50%),
+    radial-gradient(circle at 90% 85%, rgba(43, 176, 161, 0.12), transparent 50%);
+}
+
+/* The wordmark asset is flat black — invert it in dark mode so it stays
+   visible against a dark surface instead of disappearing. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) .top-bar__wordmark,
+  :root:where(:not([data-theme='light'])) .login-brand__wordmark,
+  :root:where(:not([data-theme='light'])) .sidebar__wordmark {
+    filter: invert(1);
+  }
+}
+
+:root[data-theme='dark'] .top-bar__wordmark,
+:root[data-theme='dark'] .login-brand__wordmark,
+:root[data-theme='dark'] .sidebar__wordmark {
+  filter: invert(1);
 }
 
 * {
@@ -36,20 +109,12 @@ body {
   min-height: 100%;
   color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
 }
 
 body {
-  background:
-    radial-gradient(circle at 12% 8%, rgba(147, 197, 253, 0.35), transparent 45%),
-    radial-gradient(circle at 88% 15%, rgba(196, 181, 253, 0.3), transparent 50%),
-    radial-gradient(circle at 25% 90%, rgba(253, 186, 220, 0.22), transparent 50%),
-    radial-gradient(circle at 90% 85%, rgba(153, 246, 228, 0.25), transparent 50%),
-    var(--color-bg);
+  background: var(--gradient-mesh), var(--color-bg);
   background-attachment: fixed;
-  /* Standalone PWA on iOS has no browser chrome — the status bar (clock,
-     signal, battery) sits directly over the viewport, so content needs its
-     own top clearance. viewport-fit=cover in the meta tag makes this non-zero. */
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 a {
@@ -127,6 +192,9 @@ button {
   align-items: center;
   gap: 14px;
   margin: 24px 0 32px;
+  /* Standalone PWA on iOS has no browser chrome — reserve the status bar area
+     ourselves (viewport-fit=cover makes env() non-zero there). */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .login-brand__mark {
@@ -160,9 +228,12 @@ button {
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--color-border-subtle);
   box-shadow: 0 -4px 24px rgba(31, 41, 55, 0.06);
+  /* The safe-area inset must ADD to the bar's height, not eat into a fixed
+     budget — otherwise labels get squeezed/clipped on devices with a home
+     indicator (iPhone in standalone PWA mode). */
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  height: var(--nav-height);
-  z-index: 10;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
 }
 
 .bottom-nav__item {
@@ -207,18 +278,36 @@ button {
 }
 
 .top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--color-border-subtle);
+  /* The safe-area inset is baked into this bar's own padding so it stays
+     correct whether the page is scrolled or not (position: sticky pins the
+     bar's top edge to the scrollport's y=0, so any offset must live inside
+     the bar itself, not on an ancestor). */
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+}
+
+.top-bar__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   max-width: 640px;
   margin: 0 auto;
-  padding: 12px 16px;
+  width: 100%;
 }
 
 .top-bar__brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .top-bar__mark {
@@ -303,7 +392,7 @@ button {
 .form input:not([type='checkbox']):focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(28, 110, 104, 0.15);
 }
 
 .form input[type='checkbox'] {
@@ -328,7 +417,7 @@ button {
 .form textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(28, 110, 104, 0.15);
 }
 
 .form-error {
@@ -380,7 +469,7 @@ button {
   background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
   color: white;
   border: none;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 16px rgba(28, 110, 104, 0.3);
 }
 
 .btn-primary:disabled {
@@ -449,7 +538,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(17, 24, 39, 0.05);
+  background: rgba(var(--color-ink-rgb), 0.05);
 }
 
 .trip-tile__photo img {
@@ -526,7 +615,7 @@ button {
 }
 
 .trip-tile__actions a {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(28, 110, 104, 0.08);
   color: var(--color-primary);
 }
 
@@ -673,7 +762,7 @@ button {
 .sub-tabs__item--active {
   background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
   color: white;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 3px 10px rgba(28, 110, 104, 0.35);
 }
 
 .sub-tabs__item:active {
@@ -726,7 +815,7 @@ button {
   display: inline-block;
   padding: 2px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(17, 24, 39, 0.06);
+  background: rgba(var(--color-ink-rgb), 0.06);
   color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -748,7 +837,7 @@ button {
 }
 
 .expense-tile__payer {
-  background: rgba(17, 24, 39, 0.05);
+  background: rgba(var(--color-ink-rgb), 0.05);
   border-radius: var(--radius-pill);
   padding: 4px 10px;
 }
@@ -892,14 +981,14 @@ button {
 }
 
 .category-bar__track {
-  background: rgba(17, 24, 39, 0.06);
+  background: rgba(var(--color-ink-rgb), 0.06);
   border-radius: var(--radius-pill);
   height: 8px;
   overflow: hidden;
 }
 
 .category-bar__fill {
-  background: linear-gradient(90deg, var(--color-primary), #60a5fa);
+  background: linear-gradient(90deg, var(--color-primary), #4fbfae);
   height: 100%;
   border-radius: var(--radius-pill);
   transition: width 0.4s var(--ease-out);
@@ -1012,7 +1101,7 @@ button {
 }
 
 .donut-chart__legend-item--active {
-  background: rgba(17, 24, 39, 0.05);
+  background: rgba(var(--color-ink-rgb), 0.05);
 }
 
 .donut-chart__legend-dot {
@@ -1117,7 +1206,7 @@ button {
   display: inline-block;
   padding: 2px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(28, 110, 104, 0.1);
   color: var(--color-primary);
   font-size: 11px;
   font-weight: 600;
@@ -1183,7 +1272,7 @@ button {
 }
 
 .settings-row button {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(28, 110, 104, 0.08);
   border: none;
   border-radius: var(--radius-sm);
   color: var(--color-primary);
@@ -1204,6 +1293,47 @@ button {
   align-items: center;
   margin-top: 12px;
   gap: 8px !important;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.theme-toggle__switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-ink-rgb), 0.15);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-out);
+}
+
+.theme-toggle__switch--on {
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+}
+
+.theme-toggle__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.theme-toggle__switch--on .theme-toggle__knob {
+  transform: translateX(20px);
 }
 
 /* Desktop: pionowe menu boczne zamiast dolnego paska */
@@ -1272,7 +1402,7 @@ button {
   }
 
   .sidebar__item:hover {
-    background: rgba(37, 99, 235, 0.08);
+    background: rgba(28, 110, 104, 0.08);
     color: var(--color-text);
   }
 
@@ -1283,7 +1413,7 @@ button {
   .sidebar__item--active {
     background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
     color: white;
-    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 3px 10px rgba(28, 110, 104, 0.3);
   }
 
   .sidebar__item--active:hover {

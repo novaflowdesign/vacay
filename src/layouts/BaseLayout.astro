@@ -21,10 +21,26 @@ const { title } = Astro.props;
     <link rel="icon" href={withBase('/favicon-16.png')} sizes="16x16" type="image/png" />
     <link rel="apple-touch-icon" href={withBase('/icons/apple-touch-icon.png')} />
     <link rel="manifest" href={withBase('/manifest.json')} />
-    <meta name="theme-color" content="#0F4C4A" />
+    <meta id="theme-color-meta" name="theme-color" content="#0F4C4A" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Vacay" />
+
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('vacay-theme');
+          var isDark =
+            stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+          }
+          var meta = document.getElementById('theme-color-meta');
+          if (meta) meta.setAttribute('content', isDark ? '#0e1512' : '#0F4C4A');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <slot />
