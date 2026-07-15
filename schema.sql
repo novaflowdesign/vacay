@@ -48,15 +48,18 @@ create table trips (
   created_at timestamptz not null default now()
 );
 
--- Uczestnicy wyjazdu — wpisywani ręcznie jako imiona (NIE konta w systemie).
--- Jedyne konto logujące się do aplikacji to admin; uczestnicy to tylko etykiety
--- używane przy dzieleniu wydatków (patrz expense_payments.payer_label).
+-- Uczestnicy wyjazdu — imię/etykieta używana przy dzieleniu wydatków (patrz
+-- expense_payments.payer_label), niekoniecznie konto w systemie (np. "Teść").
+-- Jeśli profile_id jest ustawione, to konto dostaje dostęp do tego wyjazdu
+-- (patrz RLS niżej) i jego kraj automatycznie ląduje na mapie tej osoby.
 create table trip_participants (
   id uuid primary key default gen_random_uuid(),
   trip_id uuid not null references trips(id) on delete cascade,
   name text not null,
+  profile_id uuid references profiles(id) on delete set null,
   created_at timestamptz not null default now(),
-  unique (trip_id, name)
+  unique (trip_id, name),
+  unique (trip_id, profile_id)
 );
 
 
@@ -132,22 +135,28 @@ create table expense_payments (
 -- 5. ODWIEDZONE KRAJE (mapa)
 -- ============================================================
 
+-- Mapa jest prywatna per konto — każdy zaznacza swoje własne odwiedzone kraje.
+-- Gdy trip_id jest ustawione, wpis powstał automatycznie z podpięcia konta do
+-- wyjazdu (patrz trip_participants) i znika razem z tym wyjazdem (on delete cascade).
 create table visited_countries (
   id uuid primary key default gen_random_uuid(),
   country_code text not null,          -- ISO 3166-1 alpha-2
-  trip_id uuid references trips(id) on delete set null,
+  profile_id uuid not null references profiles(id) on delete cascade,
+  trip_id uuid references trips(id) on delete cascade,
   first_visited_date date,
   created_by uuid references profiles(id),
   created_at timestamptz not null default now(),
-  unique (country_code)
+  unique (country_code, profile_id)
 );
 
 create table visited_localities (
   id uuid primary key default gen_random_uuid(),
-  country_code text not null references visited_countries(country_code) on delete cascade,
+  country_code text not null,
+  profile_id uuid not null references profiles(id) on delete cascade,
   name text not null,                  -- np. "Barcelona"
   created_by uuid references profiles(id),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  foreign key (country_code, profile_id) references visited_countries(country_code, profile_id) on delete cascade
 );
 
 
@@ -226,11 +235,17 @@ create policy "Admin edytuje profile (imiona/role)" on profiles
   for update using (is_admin());
 
 -- ---- trips ----
--- Admin ma pełny dostęp, viewer (konto tylko do odczytu — "Przeglądający")
--- widzi wszystko, ale nie może nic dodawać/edytować/usuwać (patrz insert/
--- update/delete poniżej, cały czas ograniczone do is_admin()).
-create policy "Zalogowani widzą wyjazdy" on trips
-  for select using (auth.uid() is not null);
+-- Admin ma pełny dostęp. Każdy inny widzi TYLKO wyjazdy, do których został
+-- podpięty jako uczestnik z kontem (trip_participants.profile_id) — patrz
+-- opis w sekcji 2 schematu. Insert/update/delete cały czas tylko dla admina.
+create policy "Uczestnicy i admin widzą wyjazdy" on trips
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from trip_participants tp
+      where tp.trip_id = trips.id and tp.profile_id = auth.uid()
+    )
+  );
 
 create policy "Admin zarządza wyjazdami" on trips
   for insert with check (is_admin());
@@ -240,8 +255,14 @@ create policy "Admin usuwa wyjazdy" on trips
   for delete using (is_admin());
 
 -- ---- trip_participants ----
-create policy "Zalogowani widzą uczestników" on trip_participants
-  for select using (auth.uid() is not null);
+create policy "Uczestnicy i admin widzą listę uczestników" on trip_participants
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from trip_participants tp2
+      where tp2.trip_id = trip_participants.trip_id and tp2.profile_id = auth.uid()
+    )
+  );
 create policy "Admin zarządza uczestnikami" on trip_participants
   for all using (is_admin()) with check (is_admin());
 
@@ -264,8 +285,14 @@ create policy "Admin usuwa waluty" on currencies
   for delete using (is_admin());
 
 -- ---- expenses ----
-create policy "Zalogowani widzą wydatki" on expenses
-  for select using (auth.uid() is not null);
+create policy "Uczestnicy i admin widzą wydatki" on expenses
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from trip_participants tp
+      where tp.trip_id = expenses.trip_id and tp.profile_id = auth.uid()
+    )
+  );
 create policy "Admin dodaje wydatki" on expenses
   for insert with check (is_admin());
 create policy "Admin edytuje wydatki" on expenses
@@ -274,32 +301,52 @@ create policy "Admin usuwa wydatki" on expenses
   for delete using (is_admin());
 
 -- ---- expense_payments ----
-create policy "Zalogowani widzą płatności" on expense_payments
-  for select using (auth.uid() is not null);
+create policy "Uczestnicy i admin widzą płatności" on expense_payments
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from expenses e
+      join trip_participants tp on tp.trip_id = e.trip_id
+      where e.id = expense_payments.expense_id and tp.profile_id = auth.uid()
+    )
+  );
 create policy "Admin zarządza płatnościami" on expense_payments
   for all using (is_admin()) with check (is_admin());
 
 -- ---- visited_countries ----
-create policy "Wszyscy widzą mapę" on visited_countries
-  for select using (auth.uid() is not null);
-create policy "Admin zarządza mapą" on visited_countries
-  for all using (is_admin()) with check (is_admin());
+-- Mapa jest prywatna: każdy zarządza tylko swoimi wpisami; admin może też,
+-- bo to on automatycznie dopisuje/kasuje kraje przy podpinaniu uczestników.
+create policy "Własna mapa lub admin" on visited_countries
+  for all using (profile_id = auth.uid() or is_admin())
+  with check (profile_id = auth.uid() or is_admin());
 
 -- ---- visited_localities ----
-create policy "Wszyscy widzą miejscowości" on visited_localities
-  for select using (auth.uid() is not null);
-create policy "Admin zarządza miejscowościami" on visited_localities
-  for all using (is_admin()) with check (is_admin());
+create policy "Własne miejscowości lub admin" on visited_localities
+  for all using (profile_id = auth.uid() or is_admin())
+  with check (profile_id = auth.uid() or is_admin());
 
 -- ---- itinerary_days ----
-create policy "Zalogowani widzą plan" on itinerary_days
-  for select using (auth.uid() is not null);
+create policy "Uczestnicy i admin widzą plan" on itinerary_days
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from trip_participants tp
+      where tp.trip_id = itinerary_days.trip_id and tp.profile_id = auth.uid()
+    )
+  );
 create policy "Admin zarządza planem dni" on itinerary_days
   for all using (is_admin()) with check (is_admin());
 
 -- ---- itinerary_items ----
-create policy "Zalogowani widzą punkty planu" on itinerary_items
-  for select using (auth.uid() is not null);
+create policy "Uczestnicy i admin widzą punkty planu" on itinerary_items
+  for select using (
+    is_admin()
+    or exists (
+      select 1 from itinerary_days d
+      join trip_participants tp on tp.trip_id = d.trip_id
+      where d.id = itinerary_items.day_id and tp.profile_id = auth.uid()
+    )
+  );
 create policy "Admin zarządza punktami planu" on itinerary_items
   for all using (is_admin()) with check (is_admin());
 

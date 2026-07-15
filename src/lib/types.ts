@@ -33,6 +33,7 @@ export interface Currency {
 export interface VisitedLocality {
   id: string;
   country_code: string;
+  profile_id: string;
   name: string;
   created_by: string | null;
   created_at: string;
@@ -42,6 +43,7 @@ export interface TripParticipant {
   id: string;
   trip_id: string;
   name: string;
+  profile_id: string | null;
 }
 
 export interface ExpenseCategory {

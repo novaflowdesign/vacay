@@ -10,7 +10,6 @@ import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { Topology } from 'topojson-specification';
 import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/useSession';
-import { useProfile } from '../lib/useProfile';
 import { withBase } from '../lib/url';
 import { countryCodeToFlag } from '../lib/format';
 import type { VisitedLocality } from '../lib/types';
@@ -93,12 +92,11 @@ function ZoomControls() {
 interface FullscreenMapProps {
   countries: CountryFeature[];
   visited: Set<string>;
-  isAdmin: boolean;
   onCountryClick: (alpha2: string) => void;
   onClose: () => void;
 }
 
-function FullscreenMap({ countries, visited, isAdmin, onCountryClick, onClose }: FullscreenMapProps) {
+function FullscreenMap({ countries, visited, onCountryClick, onClose }: FullscreenMapProps) {
   return (
     <div className="map-fullscreen">
       <button type="button" className="map-fullscreen__close" onClick={onClose} aria-label="Zamknij mapę">
@@ -115,7 +113,7 @@ function FullscreenMap({ countries, visited, isAdmin, onCountryClick, onClose }:
               <path
                 key={c.alpha2}
                 d={c.path}
-                className={countryClassName(c.alpha2, visited, isAdmin || visited.has(c.alpha2))}
+                className={countryClassName(c.alpha2, visited, true)}
                 onClick={() => onCountryClick(c.alpha2)}
               >
                 <title>{c.name}</title>
@@ -130,11 +128,12 @@ function FullscreenMap({ countries, visited, isAdmin, onCountryClick, onClose }:
 
 interface AddCountryDialogProps {
   country: CountryFeature;
+  userId: string;
   onClose: () => void;
   onAdded: (alpha2: string) => void;
 }
 
-function AddCountryDialog({ country, onClose, onAdded }: AddCountryDialogProps) {
+function AddCountryDialog({ country, userId, onClose, onAdded }: AddCountryDialogProps) {
   const [locality, setLocality] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -144,7 +143,9 @@ function AddCountryDialog({ country, onClose, onAdded }: AddCountryDialogProps) 
     setSaving(true);
     setError(null);
 
-    const { error: insertError } = await supabase.from('visited_countries').insert({ country_code: country.alpha2 });
+    const { error: insertError } = await supabase
+      .from('visited_countries')
+      .insert({ country_code: country.alpha2, profile_id: userId });
     if (insertError) {
       setSaving(false);
       setError('Nie udało się dodać kraju.');
@@ -155,7 +156,7 @@ function AddCountryDialog({ country, onClose, onAdded }: AddCountryDialogProps) 
     if (name) {
       const { error: localityError } = await supabase
         .from('visited_localities')
-        .insert({ country_code: country.alpha2, name });
+        .insert({ country_code: country.alpha2, profile_id: userId, name });
       if (localityError) {
         setSaving(false);
         setError('Kraj dodany, ale nie udało się zapisać miejscowości.');
@@ -215,12 +216,12 @@ function AddCountryDialog({ country, onClose, onAdded }: AddCountryDialogProps) 
 
 interface CountryDetailCardProps {
   country: CountryFeature;
-  isAdmin: boolean;
+  userId: string;
   onClose: () => void;
   onRemoved: (alpha2: string) => void;
 }
 
-function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDetailCardProps) {
+function CountryDetailCard({ country, userId, onClose, onRemoved }: CountryDetailCardProps) {
   const [localities, setLocalities] = useState<VisitedLocality[] | null>(null);
   const [newLocality, setNewLocality] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +232,7 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
       .from('visited_localities')
       .select('*')
       .eq('country_code', country.alpha2)
+      .eq('profile_id', userId)
       .order('name');
     if (fetchError) {
       setError('Nie udało się wczytać miejscowości.');
@@ -253,7 +255,7 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
 
     const { error: insertError } = await supabase
       .from('visited_localities')
-      .insert({ country_code: country.alpha2, name });
+      .insert({ country_code: country.alpha2, profile_id: userId, name });
 
     if (insertError) {
       setError('Nie udało się dodać miejscowości.');
@@ -265,7 +267,11 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
   }
 
   async function handleDeleteLocality(id: string) {
-    const { error: deleteError } = await supabase.from('visited_localities').delete().eq('id', id);
+    const { error: deleteError } = await supabase
+      .from('visited_localities')
+      .delete()
+      .eq('id', id)
+      .eq('profile_id', userId);
     if (deleteError) {
       setError('Nie udało się usunąć miejscowości.');
       return;
@@ -276,7 +282,11 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
   async function handleRemoveCountry() {
     if (!window.confirm(`Usunąć ${country.name} z odwiedzonych krajów?`)) return;
     setRemoving(true);
-    const { error: deleteError } = await supabase.from('visited_countries').delete().eq('country_code', country.alpha2);
+    const { error: deleteError } = await supabase
+      .from('visited_countries')
+      .delete()
+      .eq('country_code', country.alpha2)
+      .eq('profile_id', userId);
     setRemoving(false);
 
     if (deleteError) {
@@ -313,38 +323,32 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
             {localities.map((l) => (
               <div key={l.id} className="settings-row">
                 <span className="settings-row__label">{l.name}</span>
-                {isAdmin && (
-                  <button type="button" onClick={() => handleDeleteLocality(l.id)}>
-                    Usuń
-                  </button>
-                )}
+                <button type="button" onClick={() => handleDeleteLocality(l.id)}>
+                  Usuń
+                </button>
               </div>
             ))}
           </div>
         )}
 
-        {isAdmin && (
-          <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
-            <input
-              type="text"
-              className="settings-row__name-input"
-              placeholder="Nazwa miejscowości"
-              value={newLocality}
-              onChange={(e) => setNewLocality(e.target.value)}
-            />
-            <button className="btn-primary" type="submit">
-              + Dodaj
-            </button>
-          </form>
-        )}
+        <form className="form settings-add-form settings-add-form--inline" onSubmit={handleAddLocality}>
+          <input
+            type="text"
+            className="settings-row__name-input"
+            placeholder="Nazwa miejscowości"
+            value={newLocality}
+            onChange={(e) => setNewLocality(e.target.value)}
+          />
+          <button className="btn-primary" type="submit">
+            + Dodaj
+          </button>
+        </form>
 
         {error && <p className="form-error">{error}</p>}
 
-        {isAdmin && (
-          <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
-            Usuń kraj z mapy
-          </button>
-        )}
+        <button type="button" className="btn-danger country-card__remove" onClick={handleRemoveCountry} disabled={removing}>
+          Usuń kraj z mapy
+        </button>
       </div>
     </div>
   );
@@ -352,8 +356,6 @@ function CountryDetailCard({ country, isAdmin, onClose, onRemoved }: CountryDeta
 
 export default function WorldMap() {
   const session = useSession();
-  const profile = useProfile();
-  const isAdmin = profile?.role === 'admin';
 
   const [visited, setVisited] = useState<Set<string> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -371,7 +373,10 @@ export default function WorldMap() {
     let cancelled = false;
 
     async function load() {
-      const { data, error: fetchError } = await supabase.from('visited_countries').select('country_code');
+      const { data, error: fetchError } = await supabase
+        .from('visited_countries')
+        .select('country_code')
+        .eq('profile_id', session.user.id);
       if (cancelled) return;
       if (fetchError) {
         setError('Nie udało się wczytać odwiedzonych krajów.');
@@ -414,14 +419,13 @@ export default function WorldMap() {
     const country = countries.find((c) => c.alpha2 === alpha2);
     if (!country) return;
 
+    setIsFullscreen(false);
+
     if (!visited.has(alpha2)) {
-      if (!isAdmin) return;
-      setIsFullscreen(false);
       setAddingCountry(country);
       return;
     }
 
-    setIsFullscreen(false);
     setSelectedCountry(country);
   }
 
@@ -448,6 +452,7 @@ export default function WorldMap() {
     return null;
   }
 
+  const userId = session.user.id;
   const visitedList = countries.filter((c) => visited.has(c.alpha2));
 
   return (
@@ -504,7 +509,6 @@ export default function WorldMap() {
           <FullscreenMap
             countries={countries}
             visited={visited}
-            isAdmin={isAdmin}
             onCountryClick={handleCountryClick}
             onClose={() => setIsFullscreen(false)}
           />,
@@ -515,6 +519,7 @@ export default function WorldMap() {
         createPortal(
           <AddCountryDialog
             country={addingCountry}
+            userId={userId}
             onClose={() => setAddingCountry(null)}
             onAdded={handleCountryAdded}
           />,
@@ -525,7 +530,7 @@ export default function WorldMap() {
         createPortal(
           <CountryDetailCard
             country={selectedCountry}
-            isAdmin={isAdmin}
+            userId={userId}
             onClose={() => setSelectedCountry(null)}
             onRemoved={handleCountryRemoved}
           />,

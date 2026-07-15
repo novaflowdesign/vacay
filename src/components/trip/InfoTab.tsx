@@ -36,6 +36,7 @@ export default function InfoTab({ trip, participants, isAdmin }: InfoTabProps) {
           participants.map((p) => (
             <div key={p.id} className="info-row">
               <span>{p.name}</span>
+              {p.profile_id && <span className="form-hint">konto</span>}
             </div>
           ))
         )}

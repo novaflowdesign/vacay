@@ -4,12 +4,14 @@ import { useSession } from '../lib/useSession';
 import { useProfile } from '../lib/useProfile';
 import { withBase } from '../lib/url';
 import { resizeImage } from '../lib/resizeImage';
+import type { Profile } from '../lib/types';
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
 
 interface ParticipantRow {
   localId: string;
   name: string;
+  profileId: string | null;
 }
 
 let localIdCounter = 0;
@@ -36,7 +38,11 @@ export default function TripForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
 
-  const [participants, setParticipants] = useState<ParticipantRow[]>([{ localId: nextLocalId(), name: '' }]);
+  const [participants, setParticipants] = useState<ParticipantRow[]>([
+    { localId: nextLocalId(), name: '', profileId: null },
+  ]);
+  const [originalProfileIds, setOriginalProfileIds] = useState<Set<string>>(new Set());
+  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -69,14 +75,18 @@ export default function TripForm() {
     const id = new URLSearchParams(window.location.search).get('id');
     setTripId(id);
 
-    if (!id) {
-      setReady(true);
-      return;
-    }
-
     let cancelled = false;
 
     async function load() {
+      const { data: profileRows } = await supabase.from('profiles').select('*').order('display_name');
+      if (cancelled) return;
+      setProfiles((profileRows as Profile[]) ?? []);
+
+      if (!id) {
+        setReady(true);
+        return;
+      }
+
       const [{ data: trip }, { data: existingParticipants }] = await Promise.all([
         supabase.from('trips').select('*').eq('id', id).single(),
         supabase.from('trip_participants').select('*').eq('trip_id', id).order('name'),
@@ -95,7 +105,12 @@ export default function TripForm() {
       }
 
       if (existingParticipants && existingParticipants.length > 0) {
-        setParticipants(existingParticipants.map((p) => ({ localId: nextLocalId(), name: p.name })));
+        setParticipants(
+          existingParticipants.map((p) => ({ localId: nextLocalId(), name: p.name, profileId: p.profile_id }))
+        );
+        setOriginalProfileIds(
+          new Set(existingParticipants.map((p) => p.profile_id).filter((pid): pid is string => Boolean(pid)))
+        );
       }
 
       setReady(true);
@@ -112,8 +127,12 @@ export default function TripForm() {
     setParticipants((prev) => prev.map((p) => (p.localId === localId ? { ...p, name: value } : p)));
   }
 
+  function updateParticipantProfile(localId: string, profileId: string | null) {
+    setParticipants((prev) => prev.map((p) => (p.localId === localId ? { ...p, profileId } : p)));
+  }
+
   function addParticipant() {
-    setParticipants((prev) => [...prev, { localId: nextLocalId(), name: '' }]);
+    setParticipants((prev) => [...prev, { localId: nextLocalId(), name: '', profileId: null }]);
   }
 
   function removeParticipant(localId: string) {
@@ -232,19 +251,50 @@ export default function TripForm() {
       currentTripId = inserted.id;
     }
 
-    const participantNames = [...new Set(participants.map((p) => p.name.trim()).filter(Boolean))];
+    const seenNames = new Set<string>();
+    const rows: { trip_id: string; name: string; profile_id: string | null }[] = [];
+    for (const p of participants) {
+      const trimmedName = p.name.trim();
+      if (!trimmedName || seenNames.has(trimmedName)) continue;
+      seenNames.add(trimmedName);
+      rows.push({ trip_id: currentTripId as string, name: trimmedName, profile_id: p.profileId });
+    }
 
-    if (currentTripId && participantNames.length > 0) {
-      const rows = participantNames.map((participantName) => ({
-        trip_id: currentTripId,
-        name: participantName,
-      }));
+    if (currentTripId && rows.length > 0) {
       const { error: participantsError } = await supabase.from('trip_participants').insert(rows);
       if (participantsError) {
         console.error('trip_participants insert failed', participantsError);
         setSaving(false);
         setError(`Wyjazd zapisany, ale nie udało się zapisać uczestników: ${participantsError.message}`);
         return;
+      }
+    }
+
+    if (currentTripId) {
+      const newProfileIds = new Set(rows.map((r) => r.profile_id).filter((pid): pid is string => Boolean(pid)));
+      const tripCountryCode = payload.country_code;
+
+      const removedProfileIds = [...originalProfileIds].filter((pid) => !newProfileIds.has(pid));
+      if (removedProfileIds.length > 0) {
+        await supabase
+          .from('visited_countries')
+          .delete()
+          .eq('trip_id', currentTripId)
+          .in('profile_id', removedProfileIds);
+      }
+
+      const addedProfileIds = [...newProfileIds].filter((pid) => !originalProfileIds.has(pid));
+      if (addedProfileIds.length > 0 && tripCountryCode) {
+        await supabase
+          .from('visited_countries')
+          .upsert(
+            addedProfileIds.map((pid) => ({
+              country_code: tripCountryCode,
+              profile_id: pid,
+              trip_id: currentTripId,
+            })),
+            { onConflict: 'country_code,profile_id', ignoreDuplicates: true }
+          );
       }
     }
 
@@ -344,21 +394,36 @@ export default function TripForm() {
       <div>
         <label>Uczestnicy</label>
         <p className="form-hint">
-          Wpisz imiona osób biorących udział w wyjeździe (np. „Ja”, „Teść”) — to tylko etykiety
-          używane przy dzieleniu wydatków, nie konta w systemie.
+          Wpisz imiona osób biorących udział w wyjeździe (np. „Ja”, „Teść”) — to etykiety używane
+          przy dzieleniu wydatków. Podpięcie konta daje tej osobie dostęp do wyjazdu i automatycznie
+          zaznacza jego kraj na jej mapie.
         </p>
         <div className="participant-list">
           {participants.map((p) => (
-            <div key={p.localId} className="participant-row">
-              <input
-                type="text"
-                placeholder="Imię uczestnika"
-                value={p.name}
-                onChange={(e) => updateParticipant(p.localId, e.target.value)}
-              />
-              <button type="button" onClick={() => removeParticipant(p.localId)}>
-                Usuń
-              </button>
+            <div key={p.localId} className="participant-entry">
+              <div className="participant-row">
+                <input
+                  type="text"
+                  placeholder="Imię uczestnika"
+                  value={p.name}
+                  onChange={(e) => updateParticipant(p.localId, e.target.value)}
+                />
+                <button type="button" onClick={() => removeParticipant(p.localId)}>
+                  Usuń
+                </button>
+              </div>
+              <select
+                className="participant-row__account"
+                value={p.profileId ?? ''}
+                onChange={(e) => updateParticipantProfile(p.localId, e.target.value || null)}
+              >
+                <option value="">— brak konta —</option>
+                {profiles.map((pr) => (
+                  <option key={pr.id} value={pr.id}>
+                    {pr.display_name}
+                  </option>
+                ))}
+              </select>
             </div>
           ))}
         </div>
